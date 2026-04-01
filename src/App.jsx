@@ -383,6 +383,7 @@ const QUESTIONS = {
 // ─── TUTORIALS ────────────────────────────────────────────────────────────────
 
 const TUTORIALS = {
+en:{
   1:{
     title:"Secret Engines & KV v2", emoji:"🔧",
     intro:"KV v2 is a versioned key-value store. Understanding its path structure and versioning is critical for the exam.",
@@ -828,6 +829,454 @@ const TUTORIALS = {
       },
     ]
   },
+}, // end en
+fr:{
+  1:{
+    title:"Moteurs de secrets & KV v2", emoji:"🔧",
+    intro:"KV v2 est un store clé-valeur versionné. Comprendre sa structure de chemins et son versionnage est essentiel pour l'examen.",
+    steps:[
+      {
+        title:"Activer KV v2 & Opérations de base",
+        body:[
+          "Les moteurs de secrets sont activés sur un chemin. KV v2 est la variante versionnée — il trace chaque écriture et permet de revenir en arrière.",
+          "Activez-le sur un chemin personnalisé avec le flag -path. Le type de moteur est 'kv-v2'."
+        ],
+        blocks:[
+          {label:"Activer KV v2 au chemin 'developers'", code:"vault secrets enable -path=developers kv-v2"},
+          {label:"Écrire un secret", code:"vault kv put developers/team/alice password=s3cr3t role=admin"},
+          {label:"Lire le secret", code:"vault kv get developers/team/alice"},
+        ],
+        note:{type:"warn", text:"Les chemins API nécessitent le préfixe 'data/' : /v1/developers/data/team/alice — mais les commandes CLI utilisent la forme courte sans 'data/'."}
+      },
+      {
+        title:"Versionnage & Métadonnées",
+        body:[
+          "Chaque écriture crée une nouvelle version. Vous pouvez vous fixer sur une version spécifique ou récupérer l'historique complet via les métadonnées.",
+          "Supprimer une version en douceur masque ses données mais conserve les métadonnées. Détruire supprime définitivement les données."
+        ],
+        blocks:[
+          {label:"Obtenir une version spécifique", code:"vault kv get -version=2 developers/team/alice"},
+          {label:"Voir l'historique des versions", code:"vault kv metadata get developers/team/alice"},
+          {label:"Supprimer la version 1", code:"vault kv delete -versions=1 developers/team/alice"},
+          {label:"Détruire la version 1 (permanent)", code:"vault kv destroy -versions=1 developers/team/alice"},
+        ],
+        note:{type:"info", text:"Les versions supprimées peuvent être restaurées. Les versions détruites ne peuvent pas l'être. Cette distinction apparaît à l'examen."}
+      },
+      {
+        title:"Contrôle des limites de versions",
+        body:[
+          "Par défaut KV v2 conserve jusqu'à 10 versions par clé. Vous pouvez modifier cela par montage ou par secret.",
+          "Mettre max_versions à 0 signifie illimité — mais en pratique, limitez toujours pour éviter la saturation du stockage."
+        ],
+        blocks:[
+          {label:"Définir le max de versions pour le montage", code:"vault write developers/config max_versions=5"},
+          {label:"Définir le max de versions par secret", code:"vault kv metadata put -max-versions=3 developers/team/alice"},
+          {label:"Lister tous les secrets d'un chemin", code:"vault kv list developers/team/"},
+        ],
+        note:{type:"tip", text:"L'examen teste si vous savez distinguer 'vault write <path>/config' (niveau montage) et 'vault kv metadata put' (niveau clé) pour les limites de versions."}
+      },
+    ]
+  },
+  2:{
+    title:"Durcissement en production", emoji:"🛡️",
+    intro:"Les déploiements Vault en production nécessitent TLS, journaux d'audit et bonnes pratiques de gestion des clés. Rekey vs Rotate est un piège classique à l'examen.",
+    steps:[
+      {
+        title:"Durcissement TLS & Listener",
+        body:[
+          "Toutes les communications Vault doivent utiliser TLS en production. Configurez le stanza listener dans votre fichier de config HCL.",
+          "Désactivez le swap et les core dumps au niveau OS pour éviter que des secrets soient écrits sur disque."
+        ],
+        blocks:[
+          {label:"Listener avec TLS (vault.hcl)", code:'listener "tcp" {\n  address       = "0.0.0.0:8200"\n  tls_cert_file = "/etc/vault/vault.crt"\n  tls_key_file  = "/etc/vault/vault.key"\n}'},
+          {label:"Vérifier le certificat TLS", code:"openssl s_client -connect vault.example.com:8200 -showcerts"},
+        ],
+        note:{type:"warn", text:"Ne jamais définir tls_disable=1 en production. L'examen peut présenter des configs avec ce flag — signalez-le toujours comme non sécurisé."}
+      },
+      {
+        title:"Gestion des clés de déchiffrement — Rekey vs Rotate",
+        body:[
+          "Deux opérations distinctes sont souvent confondues à l'examen : rekey et rotate.",
+          "• vault operator rekey — génère de NOUVELLES clés de déchiffrement (et optionnellement une nouvelle clé racine). Utilisez cela quand les détenteurs de clés changent.",
+          "• vault operator rotate — fait tourner la CLÉ DE CHIFFREMENT INTERNE utilisée pour le stockage. Transparent pour les opérateurs — aucune nouvelle clé de déchiffrement."
+        ],
+        blocks:[
+          {label:"Rekey : générer 5 nouvelles parts, seuil 3", code:"vault operator rekey -init -key-shares=5 -key-threshold=3"},
+          {label:"Fournir une clé de déchiffrement existante", code:"vault operator rekey <unseal-key>"},
+          {label:"Faire tourner la clé de chiffrement du stockage", code:"vault operator rotate"},
+        ],
+        note:{type:"info", text:"Rekey = nouvelles clés de déchiffrement remises aux nouveaux gardiens. Rotate = nouvelle clé AES pour le stockage, aucune action humaine requise après."}
+      },
+      {
+        title:"Dispositifs d'audit & Journalisation",
+        body:[
+          "Activez au moins deux dispositifs d'audit en production. Si TOUS les dispositifs d'audit échouent, Vault se ferme (arrête de servir les requêtes).",
+          "L'audit sur fichier est le plus simple. Syslog et socket sont des alternatives pour la gestion centralisée des logs."
+        ],
+        blocks:[
+          {label:"Activer le log d'audit sur fichier", code:"vault audit enable file file_path=/var/log/vault_audit.log"},
+          {label:"Activer l'audit syslog", code:"vault audit enable syslog"},
+          {label:"Lister les dispositifs d'audit", code:"vault audit list"},
+        ],
+        note:{type:"warn", text:"Vault SE FERME si tous les dispositifs d'audit sont inaccessibles. C'est intentionnel — cela empêche les lacunes d'audit silencieuses."}
+      },
+    ]
+  },
+  3:{
+    title:"Modèle de sécurité & Scellement/Déchiffrement", emoji:"🔒",
+    intro:"La cérémonie de scellement/déchiffrement, le partage de secrets de Shamir et l'intégration HSM sont très testés. Connaissez les compromis de chaque méthode de déchiffrement.",
+    steps:[
+      {
+        title:"Partage de secrets de Shamir & Init",
+        body:[
+          "vault operator init divise la clé maître en N parts avec un seuil T. Vous avez besoin de T parts pour reconstruire la clé et déssceller Vault.",
+          "Le token root créé à l'init doit être utilisé une seule fois, puis révoqué. Stockez les clés de déchiffrement dans des emplacements sécurisés séparés."
+        ],
+        blocks:[
+          {label:"Initialiser avec 5 parts, seuil 3", code:"vault operator init -key-shares=5 -key-threshold=3"},
+          {label:"Déssceller avec une part (répéter T fois)", code:"vault operator unseal <unseal-key>"},
+          {label:"Vérifier l'état de scellement", code:"vault status"},
+        ],
+        note:{type:"info", text:"Le token root créé à l'init doit être révoqué après la configuration initiale. Utilisez 'vault token revoke <root-token>' une fois que toutes les méthodes d'authentification et politiques sont configurées."}
+      },
+      {
+        title:"Auto Unseal — HSM & Cloud KMS",
+        body:[
+          "Auto Unseal délègue la protection de la clé de déchiffrement à un KMS externe (AWS KMS, Azure Key Vault, GCP CKMS, HSM via PKCS#11).",
+          "Configuré dans le STANZA SEAL du fichier de config HCL — pas via l'API ou les flags vault operator init."
+        ],
+        blocks:[
+          {label:"Stanza seal AWS KMS (vault.hcl)", code:'seal "awskms" {\n  region     = "us-east-1"\n  kms_key_id = "alias/vault-unseal"\n}'},
+          {label:"Migrer de Shamir vers Auto Unseal", code:"vault operator unseal -migrate"},
+        ],
+        note:{type:"warn", text:"Auto unseal est configuré en HCL — pas via des commandes vault operator. L'examen teste cette distinction."}
+      },
+      {
+        title:"Seal Wrap & Augmentation d'entropie",
+        body:[
+          "Seal Wrap utilise le HSM/KMS pour double-chiffrer les valeurs sensibles (tokens, politiques). Nécessite un HSM avec support PKCS#11.",
+          "L'augmentation d'entropie injecte des octets aléatoires générés par HSM dans la génération de clés de Vault pour des environnements à haute assurance."
+        ],
+        blocks:[
+          {label:"Activer seal wrap sur un montage", code:"vault secrets enable -seal-wrap -path=secret kv-v2"},
+          {label:"Vérifier l'état du seal wrap", code:"vault read sys/mounts/secret"},
+        ],
+        note:{type:"tip", text:"Seal Wrap utilise AES-256-GCM (chiffrement symétrique via PKCS#11). L'examen dit parfois 'asymétrique' — c'est faux."}
+      },
+    ]
+  },
+  4:{
+    title:"Tokens & Politiques", emoji:"🎫",
+    intro:"Les politiques utilisent des globs de chemins HCL et des listes de capacités. La capacité deny l'emporte toujours. Connaissez la politique par défaut, la politique root et la hiérarchie des tokens.",
+    steps:[
+      {
+        title:"Syntaxe des politiques & Capacités",
+        body:[
+          "Les politiques sont des fichiers HCL avec des blocs de chemins et une liste de capacités. Capacités valides : create, read, update, delete, list, sudo, deny.",
+          "La capacité 'deny' remplace tout le reste — si une politique attachée à un token refuse un chemin, l'accès est refusé."
+        ],
+        blocks:[
+          {label:"Exemple de politique HCL", code:'path "secret/data/app/*" {\n  capabilities = ["create", "read", "update"]\n}\npath "secret/data/app/admin" {\n  capabilities = ["deny"]\n}'},
+          {label:"Écrire une politique", code:"vault policy write app-policy app-policy.hcl"},
+          {label:"Lire une politique", code:"vault policy read app-policy"},
+        ],
+        note:{type:"warn", text:"deny l'emporte toujours. Même si cinq politiques accordent l'accès, un seul deny le bloque. C'est le piège n°1 des politiques à l'examen."}
+      },
+      {
+        title:"Types de tokens & Hiérarchie",
+        body:[
+          "Les tokens de service sont renouvelables et tracés dans le stockage. Les tokens batch sont des blobs chiffrés légers — non stockés, non renouvelables.",
+          "Les tokens ont un parent. Quand un parent est révoqué, tous les tokens enfants le sont aussi (arbre de tokens). Les tokens orphelins n'ont pas de parent."
+        ],
+        blocks:[
+          {label:"Créer un token de service avec une politique", code:"vault token create -policy=app-policy -ttl=1h"},
+          {label:"Créer un token batch", code:"vault token create -type=batch -policy=app-policy -ttl=1h"},
+          {label:"Créer un token orphelin", code:"vault token create -orphan -policy=app-policy"},
+          {label:"Inspecter un token", code:"vault token lookup <token>"},
+        ],
+        note:{type:"info", text:"Les tokens batch ne peuvent pas être renouvelés, n'ont pas d'enfants et ne peuvent pas utiliser le moteur de secrets cubbyhole. Parfaits pour les charges de travail courtes à fort débit."}
+      },
+      {
+        title:"Politique par défaut & Politique root",
+        body:[
+          "Chaque token (sauf root) obtient automatiquement la politique 'default'. La politique par défaut accorde l'accès à sys/tools, auth/token/renew-self et le cubbyhole.",
+          "La politique 'root' a un accès illimité. Seuls les tokens root ou les tokens avec sudo sur sys/policies peuvent gérer les chemins de niveau root."
+        ],
+        blocks:[
+          {label:"Voir la politique par défaut", code:"vault policy read default"},
+          {label:"Lister toutes les politiques", code:"vault policy list"},
+          {label:"Créer un token sans la politique par défaut", code:"vault token create -no-default-policy -policy=app-policy"},
+        ],
+        note:{type:"tip", text:"La politique par défaut n'accorde PAS l'accès aux chemins sys/ arbitraires. Elle couvre uniquement des chemins self-service spécifiques comme renew-self et cubbyhole."}
+      },
+    ]
+  },
+  5:{
+    title:"Haute disponibilité & Réplication", emoji:"🏗️",
+    intro:"Vault HA utilise un modèle actif/standby. Le stockage intégré (Raft) est le backend recommandé. Les standbys de performance et la réplication DR ont des comportements spécifiques.",
+    steps:[
+      {
+        title:"Stockage intégré Raft",
+        body:[
+          "Le stockage intégré (Raft) est le backend HA intégré de Vault. Pas de dépendance de stockage externe comme Consul.",
+          "Nécessite un nombre impair de nœuds (3 ou 5) pour le quorum. Un nœud est actif ; les autres sont en standby."
+        ],
+        blocks:[
+          {label:"Stanza stockage Raft (vault.hcl)", code:'storage "raft" {\n  path    = "/opt/vault/data"\n  node_id = "vault-node-1"\n}'},
+          {label:"Rejoindre un nœud au cluster", code:"vault operator raft join https://vault-node-1:8200"},
+          {label:"Lister les pairs Raft", code:"vault operator raft list-peers"},
+        ],
+        note:{type:"info", text:"Raft nécessite que cluster_addr soit défini pour que les nœuds puissent communiquer. C'est séparé de api_addr (côté client)."}
+      },
+      {
+        title:"Standbys de performance",
+        body:[
+          "Les nœuds standby de performance (Vault Enterprise) servent les requêtes en lecture localement sans les transférer au nœud actif.",
+          "Les requêtes d'écriture sont automatiquement transférées au nœud actif. Cela permet de mettre à l'échelle horizontalement les charges de travail à forte lecture."
+        ],
+        blocks:[
+          {label:"Vérifier si un nœud est un standby de performance", code:"vault status | grep 'Performance Standby'"},
+          {label:"Lire depuis un standby de performance (appel client normal)", code:"vault kv get secret/data/myapp"},
+        ],
+        note:{type:"warn", text:"Les standbys de performance traitent les LECTURES localement. Les ÉCRITURES sont transférées au nœud actif. L'examen peut essayer de vous piéger avec 'les écritures sont servies localement' — c'est faux."}
+      },
+      {
+        title:"Réplication DR",
+        body:[
+          "La réplication de reprise après sinistre (DR) réplique l'état complet du cluster vers un cluster secondaire pour le basculement.",
+          "Les nœuds secondaires DR sont en STANDBY FROID — ils ne servent pas le trafic client jusqu'à leur promotion. La promotion efface les données existantes du secondaire."
+        ],
+        blocks:[
+          {label:"Activer le primaire DR", code:"vault write -f sys/replication/dr/primary/enable"},
+          {label:"Générer un token de secondaire DR", code:"vault write sys/replication/dr/primary/secondary-token id=dr-secondary"},
+          {label:"Activer le secondaire DR", code:"vault write sys/replication/dr/secondary/enable token=<secondary-token>"},
+          {label:"Promouvoir le secondaire DR", code:"vault write -f sys/replication/dr/secondary/promote"},
+        ],
+        note:{type:"warn", text:"L'activation d'un secondaire DR EFFACE TOUTES LES DONNÉES sur ce cluster et les remplace par l'état du primaire. C'est voulu — mais l'examen teste si vous le savez."}
+      },
+    ]
+  },
+  6:{
+    title:"Secrets dynamiques & Méthodes d'authentification", emoji:"⚡",
+    intro:"Les secrets dynamiques sont générés à la demande et expirent automatiquement. Les méthodes d'authentification permettent aux charges de travail de s'authentifier sans credentials longue durée.",
+    steps:[
+      {
+        title:"Secrets dynamiques de base de données",
+        body:[
+          "Le moteur de secrets database génère des credentials de base de données de courte durée à la demande. Quand le bail expire, Vault révoque les credentials.",
+          "Configurez une connexion, puis définissez des rôles avec des instructions SQL de création."
+        ],
+        blocks:[
+          {label:"Activer le moteur database", code:"vault secrets enable database"},
+          {label:"Configurer la connexion PostgreSQL", code:'vault write database/config/my-postgres\n  plugin_name=postgresql-database-plugin\n  connection_url="postgresql://{{username}}:{{password}}@localhost/mydb"\n  allowed_roles="my-role"\n  username="vault"\n  password="vault-password"'},
+          {label:"Définir un rôle", code:'vault write database/roles/my-role\n  db_name=my-postgres\n  creation_statements="CREATE ROLE \\"{{name}}\\" WITH LOGIN PASSWORD \'{{password}}\' VALID UNTIL \'{{expiration}}\';"\n  default_ttl="1h"\n  max_ttl="24h"'},
+          {label:"Générer des credentials", code:"vault read database/creds/my-role"},
+        ],
+        note:{type:"info", text:"Les credentials dynamiques sont liés à un bail. Quand le bail expire (ou est révoqué), Vault supprime l'utilisateur DB. L'application doit gérer la rotation des credentials."}
+      },
+      {
+        title:"Méthode d'authentification AppRole",
+        body:[
+          "AppRole est la méthode d'authentification standard pour les charges de travail machine/app. L'app s'authentifie avec un RoleID (non secret, intégrable) et un SecretID (secret, courte durée).",
+          "Cela résout le problème du 'secret zéro' — le SecretID est injecté à l'exécution par un orchestrateur de confiance."
+        ],
+        blocks:[
+          {label:"Activer AppRole", code:"vault auth enable approle"},
+          {label:"Créer un rôle", code:"vault write auth/approle/role/my-app token_policies=app-policy token_ttl=1h"},
+          {label:"Obtenir le RoleID", code:"vault read auth/approle/role/my-app/role-id"},
+          {label:"Générer un SecretID", code:"vault write -f auth/approle/role/my-app/secret-id"},
+          {label:"Se connecter avec AppRole", code:'vault write auth/approle/login\n  role_id=<role-id>\n  secret_id=<secret-id>'},
+        ],
+        note:{type:"tip", text:"Le RoleID est comme un nom d'utilisateur — pas secret, peut être intégré dans une image. Le SecretID est comme un mot de passe — TTL court, usage unique, injecté au déploiement."}
+      },
+      {
+        title:"Méthode d'authentification Kubernetes",
+        body:[
+          "La méthode d'authentification Kubernetes permet aux pods de s'authentifier avec leur JWT de compte de service. Aucun credential longue durée nécessaire dans le pod.",
+          "Vault valide le JWT auprès du serveur API Kubernetes."
+        ],
+        blocks:[
+          {label:"Activer l'auth Kubernetes", code:"vault auth enable kubernetes"},
+          {label:"Configurer la méthode d'auth", code:'vault write auth/kubernetes/config\n  kubernetes_host=https://kubernetes.default.svc\n  kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'},
+          {label:"Créer une liaison de rôle", code:'vault write auth/kubernetes/role/my-app\n  bound_service_account_names=my-sa\n  bound_service_account_namespaces=default\n  token_policies=app-policy\n  ttl=1h'},
+        ],
+        note:{type:"info", text:"Le JWT du compte de service du pod est le credential. Vault le vérifie avec Kubernetes — aucun SecretID nécessaire. C'est l'approche recommandée pour les charges de travail Kubernetes."}
+      },
+    ]
+  },
+  7:{
+    title:"Namespaces & Sentinel", emoji:"🏢",
+    intro:"Les namespaces fournissent une multi-location avec des méthodes d'authentification, politiques et moteurs de secrets isolés. Sentinel permet une application fine des politiques avec de la logique.",
+    steps:[
+      {
+        title:"Isolation par namespace",
+        body:[
+          "Les namespaces (Vault Enterprise) créent des environnements Vault isolés au sein d'un seul cluster. Chaque namespace a ses propres méthodes d'authentification, politiques et moteurs de secrets.",
+          "Un token du namespace A ne peut pas accéder aux ressources du namespace B sauf autorisation explicite."
+        ],
+        blocks:[
+          {label:"Créer un namespace", code:"vault namespace create team-alpha"},
+          {label:"Lister les namespaces", code:"vault namespace list"},
+          {label:"Opérer dans un namespace", code:"VAULT_NAMESPACE=team-alpha vault kv get secret/myapp"},
+          {label:"Ou utiliser le flag -namespace", code:"vault kv get -namespace=team-alpha secret/myapp"},
+        ],
+        note:{type:"info", text:"Le namespace root ne peut pas être supprimé. Les namespaces enfants héritent du CA root mais ont une authentification, des politiques et des secrets entièrement isolés."}
+      },
+      {
+        title:"Politiques Vault Sentinel",
+        body:[
+          "Sentinel étend le langage de politiques de Vault avec de la logique conditionnelle. Vous pouvez appliquer des politiques basées sur l'heure, le MFA, les métadonnées de requête, et plus encore.",
+          "Deux types de politiques : les EGP (Endpoint Governing Policies) s'appliquent à des chemins API spécifiques. Les RGP (Role Governing Policies) s'appliquent aux tokens."
+        ],
+        blocks:[
+          {label:"Exemple EGP Sentinel (heures ouvrées uniquement)", code:'import "time"\n\nmain = rule {\n  time.now.weekday not in [0, 6] and\n  time.now.hour >= 9 and time.now.hour < 17\n}'},
+          {label:"Écrire une politique EGP", code:'vault write sys/policies/egp/business-hours\n  policy="$(base64 business-hours.sentinel)"\n  paths="secret/*"\n  enforcement_level="hard-mandatory"'},
+        ],
+        note:{type:"tip", text:"Niveaux d'application EGP : advisory (log seulement), soft-mandatory (peut être contourné avec sudo), hard-mandatory (pas de contournement). L'examen teste les trois."}
+      },
+      {
+        title:"MFA avec Sentinel",
+        body:[
+          "Vault Enterprise prend en charge le MFA TOTP et Okta via des politiques Sentinel.",
+          "Le MFA peut être requis pour des chemins ou opérations spécifiques, appliqué au niveau de la couche de politique."
+        ],
+        blocks:[
+          {label:"Activer le MFA TOTP", code:"vault write sys/mfa/method/totp/my-mfa issuer=VaultQuest period=30 key_size=20 algorithm=SHA256"},
+          {label:"Appliquer le MFA via Sentinel", code:'import "mfa"\n\nmain = rule {\n  mfa.methods.my-mfa.valid\n}'},
+        ],
+        note:{type:"info", text:"L'application MFA est distincte du MFA de la méthode d'authentification. Les vérifications MFA Sentinel se produisent après l'authentification, au niveau de la couche d'autorisation."}
+      },
+    ]
+  },
+  8:{
+    title:"HSM & Auto Unseal en profondeur", emoji:"🔑",
+    intro:"L'intégration HSM (PKCS#11) et l'auto-unseal cloud KMS sont des sujets clés à l'examen. Sachez ce que chacun protège et comment fonctionne le seal wrap.",
+    steps:[
+      {
+        title:"Intégration HSM PKCS#11",
+        body:[
+          "Vault peut utiliser un module de sécurité matériel via PKCS#11 pour protéger la clé root. Le HSM n'exporte jamais le matériau clé — il effectue les opérations de chiffrement/déchiffrement en interne.",
+          "Configuré dans le stanza seal de vault.hcl."
+        ],
+        blocks:[
+          {label:"Stanza seal PKCS#11 (vault.hcl)", code:'seal "pkcs11" {\n  lib            = "/usr/lib/softhsm/libsofthsm2.so"\n  slot           = "0"\n  pin            = "1234"\n  key_label      = "vault-hsm-key"\n  hmac_key_label = "vault-hsm-hmac-key"\n}'},
+        ],
+        note:{type:"warn", text:"La clé HSM est utilisée pour le chiffrement AES-256-GCM (symétrique) — PAS RSA/asymétrique. L'examen peut indiquer le contraire — c'est faux."}
+      },
+      {
+        title:"Auto Unseal Cloud KMS",
+        body:[
+          "Cloud KMS (AWS KMS, Azure Key Vault, GCP CKMS) enveloppe la clé root de Vault. Au démarrage, Vault appelle le KMS pour déverrouiller automatiquement la clé.",
+          "Cela élimine la cérémonie de déchiffrement manuel. La frontière de sécurité se déplace vers la politique de clé KMS."
+        ],
+        blocks:[
+          {label:"Stanza seal GCP CKMS", code:'seal "gcpckms" {\n  project    = "my-gcp-project"\n  region     = "global"\n  key_ring   = "vault-keyring"\n  crypto_key = "vault-key"\n}'},
+          {label:"Stanza seal Azure Key Vault", code:'seal "azurekeyvault" {\n  tenant_id      = "00000000-0000-0000-0000-000000000000"\n  client_id      = "00000000-0000-0000-0000-000000000000"\n  client_secret  = "xxxx"\n  vault_name     = "my-azure-vault"\n  key_name       = "vault-unseal-key"\n}'},
+        ],
+        note:{type:"info", text:"La configuration d'auto unseal est en HCL uniquement. Vous ne pouvez pas configurer l'auto unseal via l'API ou le CLI Vault après le démarrage du serveur."}
+      },
+      {
+        title:"Seal Wrap & Clés de récupération",
+        body:[
+          "Avec l'auto unseal, l'init génère des clés de récupération (pas des clés de déchiffrement). Celles-ci sont utilisées pour la récupération manuelle si le KMS est indisponible.",
+          "Seal wrap double-chiffre les valeurs sensibles (politiques, tokens) en utilisant le mécanisme de seal."
+        ],
+        blocks:[
+          {label:"Init avec clés de récupération (auto unseal actif)", code:"vault operator init -recovery-shares=5 -recovery-threshold=3"},
+          {label:"Activer seal wrap sur un montage", code:"vault secrets enable -seal-wrap -path=sensitive kv-v2"},
+          {label:"Générer un nouveau token root avec les clés de récupération", code:"vault operator generate-root -init"},
+        ],
+        note:{type:"tip", text:"Avec auto unseal : les 'clés de déchiffrement' deviennent des 'clés de récupération'. Les flags init changent de -key-shares/-key-threshold à -recovery-shares/-recovery-threshold."}
+      },
+    ]
+  },
+  9:{
+    title:"Monitoring & Audit", emoji:"📊",
+    intro:"La télémétrie Vault, les journaux d'audit et les journaux opérationnels sont des systèmes distincts. Sachez où chacun est configuré et ce qu'il capture.",
+    steps:[
+      {
+        title:"Configuration de la télémétrie",
+        body:[
+          "La télémétrie Vault expose des métriques (compteurs, jauges, minuteries) aux systèmes de monitoring comme Prometheus, Datadog ou statsd.",
+          "La télémétrie est configurée dans le STANZA telemetry du fichier de config HCL — pas via l'API ou les commandes CLI."
+        ],
+        blocks:[
+          {label:"Stanza télémétrie (vault.hcl)", code:'telemetry {\n  prometheus_retention_time = "30s"\n  disable_hostname          = true\n}'},
+          {label:"Récupérer les métriques (format Prometheus)", code:"curl http://localhost:8200/v1/sys/metrics?format=prometheus"},
+        ],
+        note:{type:"warn", text:"La télémétrie est dans la config HCL — NON configurable via vault write ou l'API. L'examen teste spécifiquement cette distinction."}
+      },
+      {
+        title:"Dispositifs d'audit",
+        body:[
+          "Les dispositifs d'audit enregistrent chaque requête et réponse traitée par Vault. Les valeurs sensibles sont hashées HMAC dans le log.",
+          "Si TOUS les dispositifs d'audit échouent, Vault SE FERME — il arrête de servir les requêtes. C'est un comportement de sécurité intentionnel."
+        ],
+        blocks:[
+          {label:"Activer l'audit sur fichier", code:"vault audit enable file file_path=/var/log/vault_audit.log"},
+          {label:"Activer l'audit syslog", code:"vault audit enable syslog"},
+          {label:"Activer l'audit socket", code:"vault audit enable socket address=127.0.0.1:9090 socket_type=tcp"},
+          {label:"Lister les dispositifs d'audit", code:"vault audit list -detailed"},
+        ],
+        note:{type:"info", text:"Les logs d'audit enregistrent des tokens hashés HMAC — pas en clair. Vous pouvez vérifier un token en le hashant avec le sel d'audit : 'vault audit hash <device-path> <token>'."}
+      },
+      {
+        title:"Logs opérationnels vs Logs d'audit",
+        body:[
+          "Logs d'audit = chaque requête/réponse, orienté sécurité, protégé HMAC. Configuré via vault audit enable.",
+          "Logs opérationnels = démarrage du serveur, erreurs, communication backend. Configuré via les paramètres HCL log_level et log_file — PAS vault audit."
+        ],
+        blocks:[
+          {label:"Définir le niveau de log (vault.hcl)", code:'log_level = "info"\nlog_file  = "/var/log/vault/vault.log"'},
+          {label:"Définir le niveau de log à la volée (sans redémarrage)", code:"vault server -log-level=debug"},
+        ],
+        note:{type:"tip", text:"Logs d'audit ≠ logs opérationnels. Les logs d'audit concernent QUELLES requêtes ont été faites. Les logs opérationnels concernent COMMENT Vault fonctionne. L'examen teste les deux."}
+      },
+    ]
+  },
+  10:{
+    title:"Vault Agent", emoji:"🤖",
+    intro:"Vault Agent résout le problème du 'secret zéro' à l'exécution via l'auto-auth. Il peut mettre en cache les tokens et rendre les secrets dans des fichiers via des templates.",
+    steps:[
+      {
+        title:"Auto-Auth & Token Sink",
+        body:[
+          "Vault Agent s'authentifie auprès de Vault pour le compte de l'application en utilisant une méthode d'authentification configurée (AppRole, Kubernetes, AWS, etc.).",
+          "Le token résultant est écrit dans un fichier sink. L'application lit le token depuis le fichier — elle n'a jamais besoin de s'authentifier elle-même."
+        ],
+        blocks:[
+          {label:"Config Vault Agent (agent.hcl)", code:'vault {\n  address = "https://vault.example.com:8200"\n}\nauto_auth {\n  method "approle" {\n    config = {\n      role_id_file_path   = "/etc/vault/role-id"\n      secret_id_file_path = "/etc/vault/secret-id"\n    }\n  }\n  sink "file" {\n    config = {\n      path = "/tmp/vault-token"\n    }\n  }\n}'},
+          {label:"Démarrer l'agent", code:"vault agent -config=agent.hcl"},
+        ],
+        note:{type:"info", text:"Le fichier sink de token est écrit par l'agent et lu par l'app. L'app utilise VAULT_TOKEN pointant vers ce fichier ou le lit directement."}
+      },
+      {
+        title:"Rendu de templates",
+        body:[
+          "Les templates Vault Agent utilisent la syntaxe Consul Template pour rendre les secrets de Vault dans des fichiers. L'agent re-rend le fichier à chaque changement du secret ou renouvellement du bail.",
+          "Les templates utilisent la syntaxe Go text/template avec des fonctions Consul Template comme 'secret' et 'with'."
+        ],
+        blocks:[
+          {label:"Stanza template dans agent.hcl", code:'template {\n  source      = "/etc/vault/db-creds.tpl"\n  destination = "/app/config/db-creds.env"\n  command     = "systemctl restart myapp"\n}'},
+          {label:"Fichier template (db-creds.tpl)", code:'{{- with secret "database/creds/my-role" -}}\nDB_USER={{ .Data.username }}\nDB_PASS={{ .Data.password }}\n{{- end -}}'},
+        ],
+        note:{type:"warn", text:"Le champ 'ID:' du template dans agent.hcl est un LABEL pour le stanza template — ce n'est PAS un chemin Vault ou une clé de secret. C'est le piège exact de la question PDF de l'examen."}
+      },
+      {
+        title:"Mise en cache de l'agent & Ré-authentification",
+        body:[
+          "Vault Agent peut agir comme un proxy de mise en cache local. Les applications envoient des requêtes API Vault à l'agent, qui met en cache les réponses et transfère les manques à Vault.",
+          "Si le token expire, l'agent se ré-authentifie automatiquement et met à jour le fichier sink — l'application n'a pas besoin de gérer cela."
+        ],
+        blocks:[
+          {label:"Activer la mise en cache dans agent.hcl", code:'cache {\n  use_auto_auth_token = true\n}\nlistener "tcp" {\n  address     = "127.0.0.1:8007"\n  tls_disable = true\n}'},
+          {label:"L'app utilise l'agent comme proxy Vault", code:"export VAULT_ADDR=http://127.0.0.1:8007"},
+        ],
+        note:{type:"tip", text:"Avec la mise en cache activée, l'agent agit comme un proxy Vault local. L'app pointe VAULT_ADDR vers l'agent — elle obtient une mise en cache transparente et un renouvellement automatique du token."}
+      },
+    ]
+  },
+}, // end fr
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -1320,7 +1769,7 @@ function PracticeTerminal({ blocks }) {
 function TutorialScreen({ chapter, lang, t, onBack, onStartQuiz }) {
   const [step, setStep] = useState(0);
   const [copied, setCopied] = useState(null);
-  const tutorial = TUTORIALS[chapter.id];
+  const tutorial = (TUTORIALS[lang] || TUTORIALS.en)[chapter.id];
   if (!tutorial) return null;
 
   const totalSteps = tutorial.steps.length;
