@@ -1327,6 +1327,96 @@ const GithubLogo = () => (
 
 // ─── AUTH SCREEN ──────────────────────────────────────────────────────────────
 
+function VaultHeroAnimation() {
+  return (
+    <div style={{position:'relative',width:300,height:300,flexShrink:0}}>
+      <style>{`
+        .vha-node{position:absolute;top:50%;left:50%;width:48px;height:48px;margin:-24px 0 0 -24px;}
+        .vha-ni{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;}
+        .vha-n1{animation:vha-o1 12s linear infinite;}
+        .vha-n2{animation:vha-o2 12s linear infinite;}
+        .vha-n3{animation:vha-o3 12s linear infinite;}
+        .vha-n4{animation:vha-o4 12s linear infinite;}
+        .vha-rcw{transform-origin:150px 150px;animation:vha-cw 30s linear infinite;}
+        .vha-rccw{transform-origin:150px 150px;animation:vha-ccw 20s linear infinite;}
+        .vha-hex{transform-origin:150px 150px;animation:vha-glw 3s ease-in-out infinite;}
+        .vha-ping{transform-origin:150px 150px;animation:vha-png 2.5s ease-out infinite;}
+        .vha-dl{animation:vha-dsh 3s linear infinite;}
+        @keyframes vha-o1{from{transform:rotate(0deg) translateX(115px) rotate(0deg)}to{transform:rotate(360deg) translateX(115px) rotate(-360deg)}}
+        @keyframes vha-o2{from{transform:rotate(90deg) translateX(115px) rotate(-90deg)}to{transform:rotate(450deg) translateX(115px) rotate(-450deg)}}
+        @keyframes vha-o3{from{transform:rotate(180deg) translateX(115px) rotate(-180deg)}to{transform:rotate(540deg) translateX(115px) rotate(-540deg)}}
+        @keyframes vha-o4{from{transform:rotate(270deg) translateX(115px) rotate(-270deg)}to{transform:rotate(630deg) translateX(115px) rotate(-630deg)}}
+        @keyframes vha-cw{to{transform:rotate(360deg)}}
+        @keyframes vha-ccw{to{transform:rotate(-360deg)}}
+        @keyframes vha-glw{0%,100%{filter:drop-shadow(0 0 8px rgba(0,212,164,.5)) drop-shadow(0 0 20px rgba(0,212,164,.2))}50%{filter:drop-shadow(0 0 18px rgba(0,212,164,1)) drop-shadow(0 0 40px rgba(0,212,164,.5))}}
+        @keyframes vha-png{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(2.5)}}
+        @keyframes vha-dsh{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+      `}</style>
+      <svg viewBox="0 0 300 300" width="300" height="300">
+        <defs>
+          <radialGradient id="vhaBg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#00D4A4" stopOpacity="0.18"/>
+            <stop offset="100%" stopColor="#00D4A4" stopOpacity="0"/>
+          </radialGradient>
+        </defs>
+        {/* Ambient glow */}
+        <circle cx="150" cy="150" r="145" fill="url(#vhaBg)"/>
+        {/* Outer rotating dashed ring */}
+        <g className="vha-rcw">
+          <circle cx="150" cy="150" r="138" fill="none" stroke="rgba(0,212,164,0.1)" strokeWidth="1" strokeDasharray="3 14"/>
+        </g>
+        {/* Orbit path */}
+        <circle cx="150" cy="150" r="115" fill="none" stroke="rgba(0,212,164,0.07)" strokeWidth="1.5"/>
+        {/* Middle counter-rotating ring */}
+        <g className="vha-rccw">
+          <circle cx="150" cy="150" r="88" fill="none" stroke="rgba(0,212,164,0.18)" strokeWidth="1" strokeDasharray="6 10"/>
+        </g>
+        {/* Animated connection lines */}
+        <line x1="150" y1="150" x2="265" y2="150" stroke="rgba(0,212,164,0.2)" strokeWidth="1" strokeDasharray="5 7" className="vha-dl"/>
+        <line x1="150" y1="150" x2="150" y2="265" stroke="rgba(0,212,164,0.2)" strokeWidth="1" strokeDasharray="5 7" className="vha-dl" style={{animationDelay:'0.75s'}}/>
+        <line x1="150" y1="150" x2="35"  y2="150" stroke="rgba(0,212,164,0.2)" strokeWidth="1" strokeDasharray="5 7" className="vha-dl" style={{animationDelay:'1.5s'}}/>
+        <line x1="150" y1="150" x2="150" y2="35"  stroke="rgba(0,212,164,0.2)" strokeWidth="1" strokeDasharray="5 7" className="vha-dl" style={{animationDelay:'2.25s'}}/>
+        {/* Inner ring */}
+        <circle cx="150" cy="150" r="65" fill="none" stroke="rgba(0,212,164,0.22)" strokeWidth="1"/>
+        {/* Ping ring */}
+        <circle cx="150" cy="150" r="50" fill="none" stroke="rgba(0,212,164,0.4)" strokeWidth="1.5" className="vha-ping"/>
+        {/* Vault hexagon */}
+        <g className="vha-hex">
+          <polygon points="150,93 193,116.5 193,163.5 150,187 107,163.5 107,116.5"
+            fill="rgba(10,14,26,.95)" stroke="#00D4A4" strokeWidth="1.5"/>
+          <polygon points="150,103 183,120.5 183,157.5 150,175 117,157.5 117,120.5"
+            fill="none" stroke="rgba(0,212,164,0.25)" strokeWidth="0.8"/>
+          {/* Vault door */}
+          <circle cx="150" cy="138" r="24" fill="none" stroke="rgba(0,212,164,0.45)" strokeWidth="1.5"/>
+          <circle cx="150" cy="138" r="16" fill="none" stroke="rgba(0,212,164,0.3)" strokeWidth="1"/>
+          <rect x="143" y="124" width="14" height="5" rx="2.5" fill="rgba(0,212,164,0.75)"/>
+          <line x1="150" y1="129" x2="150" y2="136" stroke="rgba(0,212,164,0.75)" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="133" cy="131" r="2.5" fill="none" stroke="rgba(0,212,164,0.45)" strokeWidth="1.2"/>
+          <circle cx="167" cy="131" r="2.5" fill="none" stroke="rgba(0,212,164,0.45)" strokeWidth="1.2"/>
+          <circle cx="133" cy="145" r="2.5" fill="none" stroke="rgba(0,212,164,0.45)" strokeWidth="1.2"/>
+          <circle cx="167" cy="145" r="2.5" fill="none" stroke="rgba(0,212,164,0.45)" strokeWidth="1.2"/>
+          <circle cx="150" cy="138" r="5" fill="rgba(0,212,164,0.9)"/>
+          <text x="150" y="172" textAnchor="middle" fill="rgba(0,212,164,0.75)"
+            fontSize="7.5" fontFamily="monospace" letterSpacing="3" fontWeight="bold">VAULT</text>
+        </g>
+      </svg>
+      {/* Orbiting nodes */}
+      <div className="vha-node vha-n1">
+        <div className="vha-ni" style={{background:'rgba(0,212,164,.12)',border:'1px solid rgba(0,212,164,.6)',boxShadow:'0 0 14px rgba(0,212,164,.35)'}}>🔑</div>
+      </div>
+      <div className="vha-node vha-n2">
+        <div className="vha-ni" style={{background:'rgba(124,58,237,.12)',border:'1px solid rgba(124,58,237,.6)',boxShadow:'0 0 14px rgba(124,58,237,.35)'}}>👤</div>
+      </div>
+      <div className="vha-node vha-n3">
+        <div className="vha-ni" style={{background:'rgba(0,212,164,.12)',border:'1px solid rgba(0,212,164,.6)',boxShadow:'0 0 14px rgba(0,212,164,.35)'}}>🛡️</div>
+      </div>
+      <div className="vha-node vha-n4">
+        <div className="vha-ni" style={{background:'rgba(245,158,11,.12)',border:'1px solid rgba(245,158,11,.6)',boxShadow:'0 0 14px rgba(245,158,11,.35)'}}>🔒</div>
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen({ t, lang, setLang, onGuest }) {
   const [loading, setLoading] = useState(null); // 'google' | 'github' | null
   const [error, setError]     = useState('');
@@ -1342,84 +1432,146 @@ function AuthScreen({ t, lang, setLang, onGuest }) {
     }
   }
 
-  return (
-    <div style={{background:'var(--vault-dark)',minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
-      <style>{CSS_VARS}</style>
+  const features = lang === 'fr'
+    ? [
+        { icon:'🔑', label:'Secrets dynamiques',         desc:'Credentials éphémères à la demande' },
+        { icon:'🛡️', label:'Politiques & Accès',          desc:"Contrôle d'accès granulaire par chemin" },
+        { icon:'👤', label:"Méthodes d'authentification", desc:'AppRole, Kubernetes, OIDC, et plus' },
+        { icon:'🔒', label:'Chiffrement en service',      desc:'Chiffrement/déchiffrement via API' },
+      ]
+    : [
+        { icon:'🔑', label:'Dynamic Secrets',           desc:'Ephemeral credentials on demand' },
+        { icon:'🛡️', label:'Policies & Access',         desc:'Fine-grained path-based access control' },
+        { icon:'👤', label:'Auth Methods',              desc:'AppRole, Kubernetes, OIDC, and more' },
+        { icon:'🔒', label:'Encryption as a Service',   desc:'Encrypt/decrypt data via API' },
+      ];
 
-      {/* Lang picker top-right */}
-      <div style={{position:'fixed',top:16,right:16}}>
+  return (
+    <div style={{background:'var(--vault-dark)',minHeight:'100vh',display:'flex'}}>
+      <style>{CSS_VARS}</style>
+      <style>{`
+        .auth-layout{display:flex;width:100%;min-height:100vh;align-items:stretch;}
+        .auth-left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px;}
+        .auth-right{width:420px;min-width:360px;display:flex;align-items:center;justify-content:center;padding:40px;border-left:1px solid rgba(255,255,255,0.05);}
+        .auth-feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;width:100%;max-width:400px;}
+        @media(max-width:900px){
+          .auth-layout{flex-direction:column;}
+          .auth-left{padding:60px 24px 24px;}
+          .auth-right{width:100%;min-width:unset;padding:24px 24px 40px;border-left:none;border-top:1px solid rgba(255,255,255,0.05);}
+        }
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes auth-feat-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
+
+      {/* Lang picker */}
+      <div style={{position:'fixed',top:16,right:16,zIndex:100}}>
         <LangPicker lang={lang} setLang={setLang}/>
       </div>
 
-      {/* Card */}
-      <div style={{width:'100%',maxWidth:420,display:'flex',flexDirection:'column',alignItems:'center',gap:0}}>
+      <div className="auth-layout">
 
-        {/* Logo */}
-        <div className="auth-float" style={{fontSize:72,marginBottom:8,filter:'drop-shadow(0 0 24px rgba(0,212,164,.5))'}}>🔐</div>
-        <div style={{fontFamily:'JetBrains Mono,monospace',fontWeight:900,fontSize:28,color:'#00D4A4',letterSpacing:-1,marginBottom:6}}>VaultQuest</div>
-        <p style={{fontSize:13,color:'#6b7280',textAlign:'center',marginBottom:32,lineHeight:'1.6'}}>{t.authSubtitle}</p>
-
-        {/* Main card */}
-        <div style={{width:'100%',background:'rgba(17,24,39,.9)',border:'1px solid #1f2937',borderRadius:20,padding:'28px 24px',backdropFilter:'blur(10px)',boxShadow:'0 0 60px rgba(0,212,164,.06)'}}>
-
-          {/* Firebase not configured warning */}
-          {!FIREBASE_CONFIGURED && (
-            <div style={{padding:'12px 14px',borderRadius:10,background:'rgba(234,179,8,.1)',border:'1px solid rgba(234,179,8,.3)',marginBottom:20,display:'flex',gap:10,alignItems:'flex-start'}}>
-              <AlertCircle size={16} color="#eab308" style={{flexShrink:0,marginTop:1}}/>
-              <div>
-                <div style={{fontSize:12,color:'#eab308',fontWeight:600,marginBottom:3}}>{t.configWarning}</div>
-                <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer"
-                  style={{fontSize:11,color:'#6b7280',textDecoration:'underline'}}>{t.configSetup} →</a>
-              </div>
+        {/* ── LEFT: animated illustration ── */}
+        <div className="auth-left">
+          <VaultHeroAnimation/>
+          <div style={{textAlign:'center',marginTop:28,maxWidth:420}}>
+            <div style={{fontSize:11,fontWeight:700,color:'rgba(0,212,164,.65)',letterSpacing:'0.15em',textTransform:'uppercase',marginBottom:6}}>
+              HashiCorp
             </div>
-          )}
-
-          {/* Google */}
-          <button onClick={()=>handleSignIn(googleProvider,'google')} disabled={!FIREBASE_CONFIGURED||loading!==null}
-            style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'1px solid #e5e7eb',background:'white',color:'#111827',fontWeight:600,fontSize:14,cursor:!FIREBASE_CONFIGURED?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:12,marginBottom:12,transition:'all .2s',opacity:!FIREBASE_CONFIGURED?.5:1}}
-            onMouseEnter={e=>{ if(FIREBASE_CONFIGURED&&!loading) e.currentTarget.style.boxShadow='0 0 0 2px rgba(66,133,244,.5)'; }}
-            onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}>
-            {loading==='google'
-              ? <div style={{width:18,height:18,border:'2px solid #e5e7eb',borderTopColor:'#4285F4',borderRadius:'50%',animation:'spin .8s linear infinite',flexShrink:0}}/>
-              : <GoogleLogo/>}
-            <span style={{flex:1,textAlign:'center'}}>{t.signInGoogle}</span>
-          </button>
-
-          {/* GitHub */}
-          <button onClick={()=>handleSignIn(githubProvider,'github')} disabled={!FIREBASE_CONFIGURED||loading!==null}
-            style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'1px solid #374151',background:'#1f2937',color:'white',fontWeight:600,fontSize:14,cursor:!FIREBASE_CONFIGURED?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:12,marginBottom:20,transition:'all .2s',opacity:!FIREBASE_CONFIGURED?.5:1}}
-            onMouseEnter={e=>{ if(FIREBASE_CONFIGURED&&!loading) e.currentTarget.style.borderColor='#6b7280'; }}
-            onMouseLeave={e=>{ e.currentTarget.style.borderColor='#374151'; }}>
-            {loading==='github'
-              ? <div style={{width:18,height:18,border:'2px solid #374151',borderTopColor:'white',borderRadius:'50%',animation:'spin .8s linear infinite',flexShrink:0}}/>
-              : <GithubLogo/>}
-            <span style={{flex:1,textAlign:'center'}}>{t.signInGithub}</span>
-          </button>
-
-          {/* Divider */}
-          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
-            <div style={{flex:1,height:1,background:'#1f2937'}}/>
-            <span style={{fontSize:11,color:'#4b5563'}}>or</span>
-            <div style={{flex:1,height:1,background:'#1f2937'}}/>
+            <h2 style={{fontSize:28,fontWeight:900,color:'#f1f5f9',margin:'0 0 10px',lineHeight:1.2}}>
+              {lang==='fr' ? "Qu'est-ce que Vault ?" : 'What is Vault?'}
+            </h2>
+            <p style={{fontSize:13,color:'#6b7280',lineHeight:1.75,margin:'0 0 24px'}}>
+              {lang==='fr'
+                ? "Un outil de gestion des secrets et de protection des données basé sur l'identité."
+                : 'An identity-based secrets management and data protection tool.'}
+            </p>
+            <div className="auth-feat-grid">
+              {features.map((f,i) => (
+                <div key={i} style={{
+                  padding:'12px 14px',borderRadius:10,
+                  background:'rgba(255,255,255,0.03)',
+                  border:'1px solid rgba(255,255,255,0.06)',
+                  animation:`auth-feat-up .4s ease-out ${i*.1}s both`
+                }}>
+                  <div style={{fontSize:20,marginBottom:5}}>{f.icon}</div>
+                  <div style={{fontSize:12,fontWeight:700,color:'#e2e8f0',marginBottom:3}}>{f.label}</div>
+                  <div style={{fontSize:11,color:'#4b5563',lineHeight:1.5}}>{f.desc}</div>
+                </div>
+              ))}
+            </div>
           </div>
-
-          {/* Guest */}
-          <button onClick={onGuest}
-            style={{width:'100%',padding:'11px 16px',borderRadius:12,border:'1px solid rgba(0,212,164,.3)',background:'transparent',color:'#00D4A4',fontWeight:600,fontSize:13,cursor:'pointer',transition:'all .2s'}}
-            onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,212,164,.08)'; }}
-            onMouseLeave={e=>{ e.currentTarget.style.background='transparent'; }}>
-            {t.guestMode}
-          </button>
-          <p style={{textAlign:'center',fontSize:11,color:'#4b5563',marginTop:8}}>{t.guestNote}</p>
-
-          {/* Error */}
-          {error&&<div style={{marginTop:14,padding:'10px 12px',borderRadius:9,background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.3)',color:'#ef4444',fontSize:12,textAlign:'center'}}>{error}</div>}
         </div>
 
-        <p style={{marginTop:18,fontSize:11,color:'#374151',textAlign:'center'}}>{t.subtitle}</p>
-      </div>
+        {/* ── RIGHT: auth card ── */}
+        <div className="auth-right">
+          <div style={{width:'100%',maxWidth:360}}>
+            {/* Logo */}
+            <div style={{textAlign:'center',marginBottom:24}}>
+              <div className="auth-float" style={{fontSize:56,filter:'drop-shadow(0 0 20px rgba(0,212,164,.5))',marginBottom:8}}>🔐</div>
+              <div style={{fontFamily:'JetBrains Mono,monospace',fontWeight:900,fontSize:24,color:'#00D4A4',letterSpacing:-1,marginBottom:4}}>VaultQuest</div>
+              <p style={{fontSize:13,color:'#6b7280',lineHeight:1.6,margin:0}}>{t.authSubtitle}</p>
+            </div>
 
-      <style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style>
+            {/* Card */}
+            <div style={{background:'rgba(17,24,39,.9)',border:'1px solid #1f2937',borderRadius:20,padding:'28px 24px',backdropFilter:'blur(10px)',boxShadow:'0 0 60px rgba(0,212,164,.06)'}}>
+
+              {!FIREBASE_CONFIGURED&&(
+                <div style={{padding:'12px 14px',borderRadius:10,background:'rgba(234,179,8,.1)',border:'1px solid rgba(234,179,8,.3)',marginBottom:20,display:'flex',gap:10,alignItems:'flex-start'}}>
+                  <AlertCircle size={16} color="#eab308" style={{flexShrink:0,marginTop:1}}/>
+                  <div>
+                    <div style={{fontSize:12,color:'#eab308',fontWeight:600,marginBottom:3}}>{t.configWarning}</div>
+                    <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer"
+                      style={{fontSize:11,color:'#6b7280',textDecoration:'underline'}}>{t.configSetup} →</a>
+                  </div>
+                </div>
+              )}
+
+              {/* Google */}
+              <button onClick={()=>handleSignIn(googleProvider,'google')} disabled={!FIREBASE_CONFIGURED||loading!==null}
+                style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'1px solid #e5e7eb',background:'white',color:'#111827',fontWeight:600,fontSize:14,cursor:!FIREBASE_CONFIGURED?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:12,marginBottom:12,transition:'all .2s',opacity:!FIREBASE_CONFIGURED?.5:1}}
+                onMouseEnter={e=>{ if(FIREBASE_CONFIGURED&&!loading) e.currentTarget.style.boxShadow='0 0 0 2px rgba(66,133,244,.5)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.boxShadow='none'; }}>
+                {loading==='google'
+                  ?<div style={{width:18,height:18,border:'2px solid #e5e7eb',borderTopColor:'#4285F4',borderRadius:'50%',animation:'spin .8s linear infinite',flexShrink:0}}/>
+                  :<GoogleLogo/>}
+                <span style={{flex:1,textAlign:'center'}}>{t.signInGoogle}</span>
+              </button>
+
+              {/* GitHub */}
+              <button onClick={()=>handleSignIn(githubProvider,'github')} disabled={!FIREBASE_CONFIGURED||loading!==null}
+                style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'1px solid #374151',background:'#1f2937',color:'white',fontWeight:600,fontSize:14,cursor:!FIREBASE_CONFIGURED?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:12,marginBottom:20,transition:'all .2s',opacity:!FIREBASE_CONFIGURED?.5:1}}
+                onMouseEnter={e=>{ if(FIREBASE_CONFIGURED&&!loading) e.currentTarget.style.borderColor='#6b7280'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.borderColor='#374151'; }}>
+                {loading==='github'
+                  ?<div style={{width:18,height:18,border:'2px solid #374151',borderTopColor:'white',borderRadius:'50%',animation:'spin .8s linear infinite',flexShrink:0}}/>
+                  :<GithubLogo/>}
+                <span style={{flex:1,textAlign:'center'}}>{t.signInGithub}</span>
+              </button>
+
+              {/* Divider */}
+              <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
+                <div style={{flex:1,height:1,background:'#1f2937'}}/>
+                <span style={{fontSize:11,color:'#4b5563'}}>or</span>
+                <div style={{flex:1,height:1,background:'#1f2937'}}/>
+              </div>
+
+              {/* Guest */}
+              <button onClick={onGuest}
+                style={{width:'100%',padding:'11px 16px',borderRadius:12,border:'1px solid rgba(0,212,164,.3)',background:'transparent',color:'#00D4A4',fontWeight:600,fontSize:13,cursor:'pointer',transition:'all .2s'}}
+                onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,212,164,.08)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.background='transparent'; }}>
+                {t.guestMode}
+              </button>
+              <p style={{textAlign:'center',fontSize:11,color:'#4b5563',marginTop:8}}>{t.guestNote}</p>
+
+              {error&&<div style={{marginTop:14,padding:'10px 12px',borderRadius:9,background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.3)',color:'#ef4444',fontSize:12,textAlign:'center'}}>{error}</div>}
+            </div>
+
+            <p style={{marginTop:18,fontSize:11,color:'#374151',textAlign:'center'}}>{t.subtitle}</p>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
