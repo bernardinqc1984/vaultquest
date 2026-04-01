@@ -1417,9 +1417,194 @@ function VaultHeroAnimation() {
   );
 }
 
+const FEATURE_DETAILS = {
+  en: [
+    {
+      icon:'🔑', label:'Dynamic Secrets', color:'#00D4A4',
+      desc:'Ephemeral credentials on demand',
+      summary:'Vault generates unique, short-lived credentials on demand. No secrets are stored in your app — each access gets its own credential that expires automatically.',
+      points:[
+        { title:'On-demand generation', text:'Every request to Vault creates a brand-new credential — database user, cloud IAM key, TLS certificate — scoped to that workload.' },
+        { title:'Lease & auto-revocation', text:'Every dynamic secret has a TTL. When it expires (or you revoke it early), Vault deletes the underlying resource automatically.' },
+        { title:'No credential sprawl', text:"Static passwords shared between services disappear. Each workload's credential is unique and traceable." },
+      ],
+      example:{label:'Generate a dynamic DB credential', code:'vault read database/creds/my-role'},
+      tag:'Engines: database · AWS · PKI · SSH · Azure',
+    },
+    {
+      icon:'🛡️', label:'Policies & Access', color:'#7C3AED',
+      desc:'Fine-grained path-based access control',
+      summary:'Vault policies are HCL files that grant or deny capabilities on specific API paths. The deny capability always wins — one deny overrides any number of allows.',
+      points:[
+        { title:'Path-based capabilities', text:'Policies grant create, read, update, delete, list, sudo, or deny on glob-matched paths like secret/data/app/*.' },
+        { title:'deny always wins', text:'If any policy attached to a token denies a path, access is blocked — regardless of other policies that allow it.' },
+        { title:'Default & root policies', text:'Every token automatically gets the default policy (cubbyhole, renew-self). Root policy has unlimited access — protect it.' },
+      ],
+      example:{label:'Example policy', code:'path "secret/data/app/*" {\n  capabilities = ["read", "update"]\n}\npath "secret/data/app/admin" {\n  capabilities = ["deny"]\n}'},
+      tag:'Concepts: HCL · glob paths · deny wins',
+    },
+    {
+      icon:'👤', label:'Auth Methods', color:'#3B82F6',
+      desc:'AppRole, Kubernetes, OIDC, and more',
+      summary:'Auth methods let workloads and users prove their identity to Vault. Each method exchanges platform-native credentials for a short-lived Vault token.',
+      points:[
+        { title:'AppRole (machines)', text:'A RoleID (like a username) plus a SecretID (like a one-time password). The SecretID is injected at runtime — solving the secret-zero problem.' },
+        { title:'Kubernetes', text:"Pods authenticate using their service account JWT. Vault validates it against the Kubernetes API — no long-lived secrets in pod specs." },
+        { title:'OIDC / Cloud IAM', text:'AWS IAM, Azure AD, GCP service accounts, GitHub Actions — all can authenticate natively without any stored credentials.' },
+      ],
+      example:{label:'Enable & configure AppRole', code:'vault auth enable approle\nvault write auth/approle/role/my-app \\\n  token_policies=app-policy token_ttl=1h'},
+      tag:'Methods: AppRole · K8s · OIDC · AWS · GitHub',
+    },
+    {
+      icon:'🔒', label:'Encryption as a Service', color:'#F59E0B',
+      desc:'Encrypt/decrypt data via API',
+      summary:"The Transit secrets engine turns Vault into a crypto API. Your app never manages encryption keys — Vault encrypts and decrypts on request, returning ciphertext your app can store safely.",
+      points:[
+        { title:'Named encryption keys', text:'Create a named key (e.g. payments-key). Vault manages the AES-256-GCM key material — your app never sees it.' },
+        { title:'Encrypt & decrypt via API', text:'Send plaintext → get ciphertext back. Send ciphertext → get plaintext back. Keys never leave Vault.' },
+        { title:'Key rotation & rewrap', text:'Rotate the key at any time. Old ciphertexts can be rewrapped to the new key version without re-encrypting your database.' },
+      ],
+      example:{label:'Encrypt data via Transit', code:'vault write transit/encrypt/payments-key \\\n  plaintext=$(base64 <<< "4111-1111-1111-1111")'},
+      tag:'Engine: Transit · AES-256-GCM · key rotation',
+    },
+  ],
+  fr: [
+    {
+      icon:'🔑', label:'Secrets dynamiques', color:'#00D4A4',
+      desc:'Credentials éphémères à la demande',
+      summary:"Vault génère des credentials uniques et de courte durée à la demande. Aucun secret n'est stocké dans votre application — chaque accès reçoit son propre credential qui expire automatiquement.",
+      points:[
+        { title:'Génération à la demande', text:"Chaque requête à Vault crée un nouveau credential — utilisateur DB, clé IAM cloud, certificat TLS — dédié à cette charge de travail." },
+        { title:'Bail & révocation auto', text:'Chaque secret dynamique a un TTL. À expiration (ou révocation anticipée), Vault supprime automatiquement la ressource sous-jacente.' },
+        { title:'Fin de la prolifération', text:'Les mots de passe statiques partagés disparaissent. Chaque credential est unique et traçable par charge de travail.' },
+      ],
+      example:{label:'Générer un credential DB dynamique', code:'vault read database/creds/my-role'},
+      tag:'Moteurs : database · AWS · PKI · SSH · Azure',
+    },
+    {
+      icon:'🛡️', label:'Politiques & Accès', color:'#7C3AED',
+      desc:"Contrôle d'accès granulaire par chemin",
+      summary:"Les politiques Vault sont des fichiers HCL qui accordent ou refusent des capacités sur des chemins API spécifiques. La capacité deny l'emporte toujours sur tous les accès accordés.",
+      points:[
+        { title:'Capacités par chemin', text:"Les politiques accordent create, read, update, delete, list, sudo ou deny sur des chemins avec globs : secret/data/app/*." },
+        { title:'deny l\'emporte toujours', text:"Si une politique attachée à un token refuse un chemin, l'accès est bloqué — quel que soit le nombre de politiques qui l'autorisent." },
+        { title:'Politiques par défaut & root', text:"Chaque token reçoit automatiquement la politique default (cubbyhole, renew-self). La politique root a un accès illimité — à protéger." },
+      ],
+      example:{label:'Exemple de politique', code:'path "secret/data/app/*" {\n  capabilities = ["read", "update"]\n}\npath "secret/data/app/admin" {\n  capabilities = ["deny"]\n}'},
+      tag:'Concepts : HCL · chemins glob · deny prime',
+    },
+    {
+      icon:'👤', label:"Méthodes d'authentification", color:'#3B82F6',
+      desc:'AppRole, Kubernetes, OIDC, et plus',
+      summary:"Les méthodes d'authentification permettent aux charges de travail et aux utilisateurs de prouver leur identité à Vault. Chaque méthode échange des credentials natifs de la plateforme contre un token Vault de courte durée.",
+      points:[
+        { title:'AppRole (machines)', text:"Un RoleID (comme un nom d'utilisateur) + un SecretID (comme un mot de passe à usage unique). Le SecretID est injecté à l'exécution — résout le problème du secret zéro." },
+        { title:'Kubernetes', text:"Les pods s'authentifient avec leur JWT de compte de service. Vault le valide auprès de l'API Kubernetes — aucun secret longue durée dans les specs de pod." },
+        { title:'OIDC / Cloud IAM', text:'AWS IAM, Azure AD, GCP, GitHub Actions — tous peuvent s\'authentifier nativement sans credentials stockés.' },
+      ],
+      example:{label:'Activer & configurer AppRole', code:'vault auth enable approle\nvault write auth/approle/role/my-app \\\n  token_policies=app-policy token_ttl=1h'},
+      tag:'Méthodes : AppRole · K8s · OIDC · AWS · GitHub',
+    },
+    {
+      icon:'🔒', label:'Chiffrement en service', color:'#F59E0B',
+      desc:'Chiffrement/déchiffrement via API',
+      summary:"Le moteur Transit transforme Vault en une API cryptographique. Votre application ne gère jamais les clés — Vault chiffre et déchiffre à la demande, renvoyant un ciphertext que votre app stocke en sécurité.",
+      points:[
+        { title:'Clés nommées', text:'Créez une clé nommée (ex. payments-key). Vault gère le matériau clé AES-256-GCM — votre application ne le voit jamais.' },
+        { title:'Chiffrer & déchiffrer via API', text:'Envoyez du texte clair → recevez du ciphertext. Envoyez du ciphertext → recevez le texte clair. Les clés ne quittent jamais Vault.' },
+        { title:'Rotation & rewrap', text:'Faites tourner la clé à tout moment. Les anciens ciphertexts peuvent être "rewrappés" vers la nouvelle version sans re-chiffrer votre base de données.' },
+      ],
+      example:{label:'Chiffrer via Transit', code:'vault write transit/encrypt/payments-key \\\n  plaintext=$(base64 <<< "4111-1111-1111-1111")'},
+      tag:'Moteur : Transit · AES-256-GCM · rotation de clé',
+    },
+  ],
+};
+
+function FeatureModal({ feature, lang, onClose }) {
+  if (!feature) return null;
+  const isEn = lang !== 'fr';
+  const closeLabel = isEn ? 'Close' : 'Fermer';
+  const exampleTitle = isEn ? 'Example' : 'Exemple';
+  const conceptsTitle = isEn ? 'Key concepts' : 'Concepts clés';
+
+  return (
+    <div
+      onClick={e => { if(e.target === e.currentTarget) onClose(); }}
+      style={{
+        position:'fixed',inset:0,zIndex:1000,
+        background:'rgba(0,0,0,0.7)',backdropFilter:'blur(4px)',
+        display:'flex',alignItems:'center',justifyContent:'center',padding:20,
+        animation:'fm-in .18s ease-out',
+      }}
+    >
+      <style>{`
+        @keyframes fm-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+        .fm-code{background:#0a0e1a;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a7f3d0;white-space:pre;overflow-x:auto;line-height:1.65;}
+        .fm-point{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+        .fm-point:last-child{border-bottom:none;}
+        .fm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+      `}</style>
+      <div style={{
+        width:'100%',maxWidth:540,maxHeight:'90vh',overflowY:'auto',
+        background:'#111827',border:'1px solid rgba(255,255,255,0.1)',
+        borderRadius:20,padding:'32px 28px',position:'relative',
+        boxShadow:'0 24px 80px rgba(0,0,0,0.7)',
+      }}>
+        {/* Close */}
+        <button onClick={onClose} style={{
+          position:'absolute',top:16,right:16,background:'none',
+          border:'1px solid rgba(255,255,255,0.1)',color:'#6b7280',
+          borderRadius:8,padding:'4px 12px',cursor:'pointer',fontSize:12,
+        }}>{closeLabel}</button>
+
+        {/* Header */}
+        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}>
+          <div style={{
+            width:52,height:52,borderRadius:14,flexShrink:0,
+            background:`${feature.color}18`,border:`1px solid ${feature.color}55`,
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,
+            boxShadow:`0 0 20px ${feature.color}30`,
+          }}>{feature.icon}</div>
+          <div>
+            <div style={{fontSize:18,fontWeight:800,color:'#f1f5f9',lineHeight:1.2}}>{feature.label}</div>
+            <div style={{fontSize:12,color:feature.color,marginTop:3,fontWeight:500}}>{feature.tag}</div>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <p style={{fontSize:13,color:'#9ca3af',lineHeight:1.75,margin:'0 0 24px',padding:'14px 16px',background:'rgba(255,255,255,0.03)',borderRadius:10,borderLeft:`3px solid ${feature.color}70`}}>
+          {feature.summary}
+        </p>
+
+        {/* Key concepts */}
+        <div style={{marginBottom:24}}>
+          <div style={{fontSize:11,fontWeight:700,color:feature.color,letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:10}}>{conceptsTitle}</div>
+          {feature.points.map((p,i) => (
+            <div key={i} className="fm-point">
+              <div className="fm-dot" style={{background:feature.color}}/>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:'#e2e8f0',marginBottom:3}}>{p.title}</div>
+                <div style={{fontSize:12,color:'#6b7280',lineHeight:1.6}}>{p.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Example */}
+        <div>
+          <div style={{fontSize:11,fontWeight:700,color:feature.color,letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:8}}>{exampleTitle}</div>
+          <div style={{fontSize:11,color:'#4b5563',marginBottom:6}}>$ {feature.example.label}</div>
+          <div className="fm-code">{feature.example.code}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen({ t, lang, setLang, onGuest }) {
-  const [loading, setLoading] = useState(null); // 'google' | 'github' | null
-  const [error, setError]     = useState('');
+  const [loading, setLoading]   = useState(null); // 'google' | 'github' | null
+  const [error, setError]       = useState('');
+  const [activeFeature, setActiveFeature] = useState(null);
 
   async function handleSignIn(provider, name) {
     if(!FIREBASE_CONFIGURED) return;
@@ -1432,19 +1617,7 @@ function AuthScreen({ t, lang, setLang, onGuest }) {
     }
   }
 
-  const features = lang === 'fr'
-    ? [
-        { icon:'🔑', label:'Secrets dynamiques',         desc:'Credentials éphémères à la demande' },
-        { icon:'🛡️', label:'Politiques & Accès',          desc:"Contrôle d'accès granulaire par chemin" },
-        { icon:'👤', label:"Méthodes d'authentification", desc:'AppRole, Kubernetes, OIDC, et plus' },
-        { icon:'🔒', label:'Chiffrement en service',      desc:'Chiffrement/déchiffrement via API' },
-      ]
-    : [
-        { icon:'🔑', label:'Dynamic Secrets',           desc:'Ephemeral credentials on demand' },
-        { icon:'🛡️', label:'Policies & Access',         desc:'Fine-grained path-based access control' },
-        { icon:'👤', label:'Auth Methods',              desc:'AppRole, Kubernetes, OIDC, and more' },
-        { icon:'🔒', label:'Encryption as a Service',   desc:'Encrypt/decrypt data via API' },
-      ];
+  const features = FEATURE_DETAILS[lang] || FEATURE_DETAILS.en;
 
   return (
     <div style={{background:'var(--vault-dark)',minHeight:'100vh',display:'flex'}}>
@@ -1454,6 +1627,8 @@ function AuthScreen({ t, lang, setLang, onGuest }) {
         .auth-left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px;}
         .auth-right{width:420px;min-width:360px;display:flex;align-items:center;justify-content:center;padding:40px;border-left:1px solid rgba(255,255,255,0.05);}
         .auth-feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;width:100%;max-width:400px;}
+        .auth-feat-card{padding:14px;border-radius:10px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;text-align:left;width:100%;background:none;}
+        .auth-feat-card:hover{transform:translateY(-2px);}
         @media(max-width:900px){
           .auth-layout{flex-direction:column;}
           .auth-left{padding:60px 24px 24px;}
@@ -1462,6 +1637,10 @@ function AuthScreen({ t, lang, setLang, onGuest }) {
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes auth-feat-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
+
+      {activeFeature !== null && (
+        <FeatureModal feature={features[activeFeature]} lang={lang} onClose={()=>setActiveFeature(null)}/>
+      )}
 
       {/* Lang picker */}
       <div style={{position:'fixed',top:16,right:16,zIndex:100}}>
@@ -1487,16 +1666,26 @@ function AuthScreen({ t, lang, setLang, onGuest }) {
             </p>
             <div className="auth-feat-grid">
               {features.map((f,i) => (
-                <div key={i} style={{
-                  padding:'12px 14px',borderRadius:10,
-                  background:'rgba(255,255,255,0.03)',
-                  border:'1px solid rgba(255,255,255,0.06)',
-                  animation:`auth-feat-up .4s ease-out ${i*.1}s both`
-                }}>
-                  <div style={{fontSize:20,marginBottom:5}}>{f.icon}</div>
+                <button key={i} className="auth-feat-card"
+                  onClick={()=>setActiveFeature(i)}
+                  style={{
+                    border:`1px solid ${f.color}25`,
+                    background:`${f.color}08`,
+                    boxShadow:`0 0 0 0 ${f.color}00`,
+                    animation:`auth-feat-up .4s ease-out ${i*.1}s both`,
+                  }}
+                  onMouseEnter={e=>{ e.currentTarget.style.borderColor=`${f.color}60`; e.currentTarget.style.boxShadow=`0 4px 20px ${f.color}18`; }}
+                  onMouseLeave={e=>{ e.currentTarget.style.borderColor=`${f.color}25`; e.currentTarget.style.boxShadow='none'; }}
+                >
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+                    <span style={{fontSize:22}}>{f.icon}</span>
+                    <span style={{fontSize:9,color:f.color,border:`1px solid ${f.color}40`,borderRadius:4,padding:'2px 6px',fontWeight:600,letterSpacing:'0.05em',fontFamily:'monospace'}}>
+                      {lang==='fr' ? 'APERÇU →' : 'PREVIEW →'}
+                    </span>
+                  </div>
                   <div style={{fontSize:12,fontWeight:700,color:'#e2e8f0',marginBottom:3}}>{f.label}</div>
-                  <div style={{fontSize:11,color:'#4b5563',lineHeight:1.5}}>{f.desc}</div>
-                </div>
+                  <div style={{fontSize:11,color:'#6b7280',lineHeight:1.5}}>{f.desc}</div>
+                </button>
               ))}
             </div>
           </div>
