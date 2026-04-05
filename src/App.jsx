@@ -62,7 +62,7 @@ const TRANSLATIONS = {
     correctMsg:'Correct!', streakBonus:'streak bonus!', correctAnswer:'Correct answer:',
     nextBtn:'Next Question →', completeBtn:'🏁 Complete Chapter',
     chapterComplete:'Chapter Complete!', badgeUnlocked:'Badge Unlocked',
-    backDash:'🏠 Back to Dashboard',
+    backDash:'🏠 Back to Dashboard', homeLabel:'← Home',
     examMode:'⏱ Exam Mode', passed:'PASSED!', keepStudying:'Keep Studying',
     correctWord:'correct', passThreshold:'Pass threshold: 75%', timeTaken:'Time taken:',
     hideReview:'Hide Review', reviewAnswers:'📋 Review Answers',
@@ -107,7 +107,7 @@ const TRANSLATIONS = {
     correctMsg:'Correct !', streakBonus:'bonus de série !', correctAnswer:'Bonne réponse :',
     nextBtn:'Question suivante →', completeBtn:'🏁 Terminer le chapitre',
     chapterComplete:'Chapitre terminé !', badgeUnlocked:'Badge débloqué',
-    backDash:'🏠 Retour au tableau de bord',
+    backDash:'🏠 Retour au tableau de bord', homeLabel:'← Accueil',
     examMode:'⏱ Mode Examen', passed:'RÉUSSI !', keepStudying:'Continuez à étudier',
     correctWord:'correct(s)', passThreshold:'Seuil de réussite : 75%', timeTaken:'Temps écoulé :',
     hideReview:'Masquer la révision', reviewAnswers:'📋 Réviser les réponses',
@@ -1825,7 +1825,11 @@ function Header({ gs, onProfile, onHome, profileActive=false, lang, setLang, t, 
   return (
     <header style={{background:'rgba(10,14,26,.95)',borderBottom:'1px solid #1f2937',backdropFilter:'blur(10px)',position:'sticky',top:0,zIndex:40,padding:'10px 20px'}}>
       <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
-        <span onClick={onHome} style={{fontFamily:'JetBrains Mono,monospace',fontWeight:900,fontSize:18,color:'#00D4A4',whiteSpace:'nowrap',cursor:onHome?'pointer':'default',userSelect:'none'}} title={onHome?t.backDash:undefined}>🔐 VaultQuest</span>
+        <span onClick={onHome}
+          onMouseEnter={e=>{if(onHome){e.currentTarget.style.opacity='0.75';e.currentTarget.style.textDecoration='underline';}}}
+          onMouseLeave={e=>{e.currentTarget.style.opacity='1';e.currentTarget.style.textDecoration='none';}}
+          style={{fontFamily:'JetBrains Mono,monospace',fontWeight:900,fontSize:18,color:'#00D4A4',whiteSpace:'nowrap',cursor:onHome?'pointer':'default',userSelect:'none',transition:'opacity .15s'}}
+          title={onHome?t.backDash:undefined}>🔐 VaultQuest</span>
         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3,padding:'0 12px'}}>
           <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#6b7280'}}>
             <span>{t.level} {lvl}</span><span>{inLvl} / 500 XP</span>
@@ -1835,6 +1839,14 @@ function Header({ gs, onProfile, onHome, profileActive=false, lang, setLang, t, 
           </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+          {profileActive&&onHome&&(
+            <button onClick={onHome}
+              style={{display:'flex',alignItems:'center',gap:5,padding:'5px 13px',borderRadius:99,background:'rgba(0,212,164,.12)',border:'1px solid rgba(0,212,164,.4)',color:'#00D4A4',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all .2s',whiteSpace:'nowrap'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='rgba(0,212,164,.25)';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='rgba(0,212,164,.12)';}}>
+              <Home size={13}/> {t.homeLabel}
+            </button>
+          )}
           {gs.streak>=2&&<span style={{padding:'2px 9px',borderRadius:99,fontSize:12,fontWeight:700,background:gs.streak>=5?'rgba(255,215,0,.2)':'rgba(249,115,22,.2)',color:gs.streak>=5?'#FFD700':'#fb923c'}}>🔥 {gs.streak}</span>}
           <span style={{padding:'2px 9px',borderRadius:99,fontSize:11,fontWeight:700,background:'rgba(124,58,237,.3)',color:'#a78bfa',border:'1px solid rgba(124,58,237,.4)'}}>Lv.{lvl}</span>
           <LangPicker lang={lang} setLang={setLang}/>
