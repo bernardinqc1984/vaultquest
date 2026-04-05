@@ -1819,13 +1819,13 @@ function LangPicker({ lang, setLang }) {
 
 // ─── HEADER ───────────────────────────────────────────────────────────────────
 
-function Header({ gs, onProfile, profileActive=false, lang, setLang, t, user, onSignOut }) {
+function Header({ gs, onProfile, onHome, profileActive=false, lang, setLang, t, user, onSignOut }) {
   const lvl=getLevel(gs.totalXP), inLvl=gs.totalXP-(lvl-1)*500, pct=Math.min((inLvl/500)*100,100);
   const isGuest=!user||user.isGuest;
   return (
     <header style={{background:'rgba(10,14,26,.95)',borderBottom:'1px solid #1f2937',backdropFilter:'blur(10px)',position:'sticky',top:0,zIndex:40,padding:'10px 20px'}}>
       <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
-        <span style={{fontFamily:'JetBrains Mono,monospace',fontWeight:900,fontSize:18,color:'#00D4A4',whiteSpace:'nowrap'}}>🔐 VaultQuest</span>
+        <span onClick={onHome} style={{fontFamily:'JetBrains Mono,monospace',fontWeight:900,fontSize:18,color:'#00D4A4',whiteSpace:'nowrap',cursor:onHome?'pointer':'default',userSelect:'none'}} title={onHome?t.backDash:undefined}>🔐 VaultQuest</span>
         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3,padding:'0 12px'}}>
           <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#6b7280'}}>
             <span>{t.level} {lvl}</span><span>{inLvl} / 500 XP</span>
@@ -2536,8 +2536,14 @@ export default function App() {
     return(
       <div style={{background:'var(--vault-dark)',minHeight:'100vh',display:'flex',flexDirection:'column'}}>
         <style>{CSS_VARS}</style>
-        <Header {...headerProps} onProfile={()=>setView('dashboard')} profileActive/>
+        <Header {...headerProps} onProfile={()=>setView('dashboard')} onHome={()=>setView('dashboard')} profileActive/>
         <div style={{flex:1,maxWidth:670,margin:'0 auto',width:'100%',padding:'22px 14px',display:'flex',flexDirection:'column',gap:18}}>
+          {/* Back to dashboard */}
+          <button onClick={()=>setView('dashboard')} style={{alignSelf:'flex-start',display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:99,background:'rgba(0,212,164,.1)',border:'1px solid rgba(0,212,164,.3)',color:'#00D4A4',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .2s'}}
+            onMouseEnter={e=>{e.currentTarget.style.background='rgba(0,212,164,.2)';}}
+            onMouseLeave={e=>{e.currentTarget.style.background='rgba(0,212,164,.1)';}}>
+            <Home size={14}/> {t.backDash}
+          </button>
           {/* User info card */}
           <div style={{background:'#111827',border:'1px solid #1f2937',borderRadius:20,padding:26,textAlign:'center'}}>
             {!isGuest&&user?.photoURL
