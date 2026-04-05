@@ -222,6 +222,7 @@ const CHAPTERS = {
     {id:9,emoji:"📊",title:"Monitoring & Audit",   xpReward:250,stars:4},
     {id:10,emoji:"🤖",title:"Vault Agent",          xpReward:200,stars:3},
     {id:11,emoji:"🔑",title:"AppRole Auth Method",  xpReward:225,stars:3},
+    {id:12,emoji:"👤",title:"Userpass Auth Method", xpReward:175,stars:2},
   ],
   fr:[
     {id:1,emoji:"🔧",title:"Moteurs de Secrets",       xpReward:100,stars:1},
@@ -235,12 +236,13 @@ const CHAPTERS = {
     {id:9,emoji:"📊",title:"Monitoring & Audit",       xpReward:250,stars:4},
     {id:10,emoji:"🤖",title:"Vault Agent",             xpReward:200,stars:3},
     {id:11,emoji:"🔑",title:"Méthode Auth AppRole",    xpReward:225,stars:3},
+    {id:12,emoji:"👤",title:"Méthode Auth Userpass",   xpReward:175,stars:2},
   ],
 };
 
 const BADGES = {
-  en:["🔑 Cubbyhole Keeper","🛡️ Hardening Hero","🔒 Security Sentinel","📜 Policy Paladin","⚡ HA Commander","🌐 DR Defender","🔐 HSM Handler","🚀 Namespace Navigator","📊 Telemetry Tracker","🤖 Agent Architect","🔑 AppRole Ace"],
-  fr:["🔑 Gardien Cubbyhole","🛡️ Héros du Durcissement","🔒 Sentinelle Sécurité","📜 Paladin des Politiques","⚡ Commandant HA","🌐 Défenseur DR","🔐 Maître HSM","🚀 Navigateur Namespace","📊 Traqueur de Télémétrie","🤖 Architecte Agent","🔑 As de l'AppRole"],
+  en:["🔑 Cubbyhole Keeper","🛡️ Hardening Hero","🔒 Security Sentinel","📜 Policy Paladin","⚡ HA Commander","🌐 DR Defender","🔐 HSM Handler","🚀 Namespace Navigator","📊 Telemetry Tracker","🤖 Agent Architect","🔑 AppRole Ace","👤 Userpass Master"],
+  fr:["🔑 Gardien Cubbyhole","🛡️ Héros du Durcissement","🔒 Sentinelle Sécurité","📜 Paladin des Politiques","⚡ Commandant HA","🌐 Défenseur DR","🔐 Maître HSM","🚀 Navigateur Namespace","📊 Traqueur de Télémétrie","🤖 Architecte Agent","🔑 As de l'AppRole","👤 Maître Userpass"],
 };
 
 const QUESTIONS = {
@@ -318,6 +320,13 @@ const QUESTIONS = {
       {id:"11-4",type:"MCQ",text:"Which AppRole configuration parameter limits the number of times a single SecretID can be used before it is automatically invalidated?",options:["secret_id_ttl","token_num_uses","secret_id_num_uses","bind_secret_id"],correct:2,xp:25,explanation:"secret_id_num_uses=1 creates a one-time-password behaviour — the SecretID is invalidated after the first successful authentication. Set to 0 for unlimited uses. For maximum security, combine secret_id_num_uses=1 with response wrapping for delivery: even if the wrapping token is intercepted, the SecretID can only be used once."},
       {id:"11-5",type:"TRUE_FALSE",text:"When bind_secret_id is set to false, a workload can authenticate using only the RoleID without providing a SecretID.",correct:true,xp:20,explanation:"bind_secret_id=false disables the SecretID requirement — any entity that knows the RoleID can obtain a token for that role. This is significantly less secure and should only be used on trusted networks where RoleID exposure risk is acceptable. The default and recommended setting is true (SecretID required)."},
     ],
+    12:[
+      {id:"12-1",type:"MCQ",text:"What is the primary use case for Vault's Userpass authentication method?",options:["Machine-to-machine automated workloads","Human operators authenticating with a username and password","Kubernetes pod service account authentication","Certificate-based mTLS authentication"],correct:1,xp:20,explanation:"Userpass is designed for human operators who need simple username/password authentication to Vault. Unlike AppRole (machine-to-machine), Userpass is interactive — it prompts for the password at login time and is NOT recommended for automated scripts or CI/CD pipelines."},
+      {id:"12-2",type:"MCQ",text:"Which command creates a Userpass user named 'automation' with password 'Password1' and policy 'kv-policy'?",options:["vault auth create userpass/users/automation password=Password1 policies=kv-policy","vault write auth/userpass/users/automation password=Password1 policies=kv-policy","vault userpass create automation -password=Password1 -policy=kv-policy","vault write userpass/create automation password=Password1"],correct:1,xp:25,explanation:"vault write auth/userpass/users/<username> creates or updates a user. You can set password, policies, token_ttl, token_max_ttl, and other token parameters at creation time or update them later with another vault write to the same path."},
+      {id:"12-3",type:"TERMINAL",text:"Type the CLI command to log in to Vault using the userpass method with username 'automation'.",correct:"vault login -method=userpass username=automation",xp:30,explanation:"vault login -method=userpass prompts interactively for the password (hidden). After successful auth, Vault stores the token in the token helper (~/.vault-token) — you do NOT need to run vault login again for future requests. The -path flag allows targeting a userpass method mounted at a non-default path."},
+      {id:"12-4",type:"TRUE_FALSE",text:"Multiple instances of the Userpass auth method can be enabled at different paths on the same Vault server.",correct:true,xp:20,explanation:"Like all Vault auth methods, multiple instances of userpass can coexist at different paths (e.g., userpass/ and local/). Use vault auth enable -path=local userpass to mount a second instance. This allows segregating users by team, environment, or trust level. Log in against a specific mount with vault login -method=userpass -path=local."},
+      {id:"12-5",type:"MCQ",text:"Which command updates the password for an existing Userpass user named 'charleszi'?",options:["vault update auth/userpass/users/charleszi password=NewP@ss","vault write auth/userpass/users/charleszi/password password=NewP@ss","vault auth update userpass charleszi --password=NewP@ss","vault kv put auth/userpass/users/charleszi password=NewP@ss"],correct:1,xp:25,explanation:"The dedicated /password sub-path is the correct endpoint for password updates. The full command is: vault write auth/userpass/users/<username>/password password=<new>. Alternatively, vault write auth/userpass/users/<username> password=<new> also works but overwrites all other user settings, so use the /password sub-path for targeted updates."},
+    ],
   },
   fr:{
     1:[
@@ -392,6 +401,13 @@ const QUESTIONS = {
       {id:"11-3",type:"TERMINAL",text:"Tapez la commande pour générer un nouveau SecretID pour un rôle AppRole nommé 'automation'.",correct:"vault write --force auth/approle/role/automation/secret-id",xp:30,explanation:"--force est nécessaire car l'endpoint attend un POST sans corps de données — sans lui, vault write attendrait une entrée. La réponse inclut secret_id, secret_id_accessor, secret_id_num_uses et secret_id_ttl. Pour une livraison sécurisée, préfixez avec -wrap-ttl=60s pour retourner un token d'emballage plutôt que le SecretID brut."},
       {id:"11-4",type:"MCQ",text:"Quel paramètre de configuration AppRole limite le nombre d'utilisations d'un SecretID avant qu'il soit automatiquement invalidé ?",options:["secret_id_ttl","token_num_uses","secret_id_num_uses","bind_secret_id"],correct:2,xp:25,explanation:"secret_id_num_uses=1 crée un comportement de mot de passe à usage unique — le SecretID est invalidé après la première authentification réussie. Mettre à 0 permet des usages illimités. Pour une sécurité maximale, combinez secret_id_num_uses=1 avec response wrapping pour la livraison : même si le token d'emballage est intercepté, le SecretID ne peut être utilisé qu'une seule fois."},
       {id:"11-5",type:"TRUE_FALSE",text:"Quand bind_secret_id est mis à false, un workload peut s'authentifier en utilisant uniquement le RoleID sans fournir de SecretID.",correct:true,xp:20,explanation:"bind_secret_id=false désactive l'exigence du SecretID — toute entité connaissant le RoleID peut obtenir un token pour ce rôle. C'est nettement moins sécurisé et ne devrait être utilisé que sur des réseaux de confiance où le risque d'exposition du RoleID est acceptable. La valeur par défaut et recommandée est true (SecretID requis)."},
+    ],
+    12:[
+      {id:"12-1",type:"MCQ",text:"Quel est le cas d'usage principal de la méthode d'authentification Userpass de Vault ?",options:["Workloads automatisés machine-à-machine","Opérateurs humains s'authentifiant avec un nom d'utilisateur et un mot de passe","Authentification de compte de service de pod Kubernetes","Authentification mTLS basée sur certificat"],correct:1,xp:20,explanation:"Userpass est conçu pour les opérateurs humains qui ont besoin d'une authentification simple par nom d'utilisateur/mot de passe vers Vault. Contrairement à AppRole (machine-à-machine), Userpass est interactif — il demande le mot de passe à la connexion et n'est PAS recommandé pour les scripts automatisés ou les pipelines CI/CD."},
+      {id:"12-2",type:"MCQ",text:"Quelle commande crée un utilisateur Userpass nommé 'automation' avec le mot de passe 'Password1' et la politique 'kv-policy' ?",options:["vault auth create userpass/users/automation password=Password1 policies=kv-policy","vault write auth/userpass/users/automation password=Password1 policies=kv-policy","vault userpass create automation -password=Password1 -policy=kv-policy","vault write userpass/create automation password=Password1"],correct:1,xp:25,explanation:"vault write auth/userpass/users/<username> crée ou met à jour un utilisateur. Vous pouvez définir password, policies, token_ttl, token_max_ttl et d'autres paramètres de token à la création ou les mettre à jour ultérieurement avec un autre vault write sur le même chemin."},
+      {id:"12-3",type:"TERMINAL",text:"Tapez la commande CLI pour se connecter à Vault avec la méthode userpass et le nom d'utilisateur 'automation'.",correct:"vault login -method=userpass username=automation",xp:30,explanation:"vault login -method=userpass demande interactivement le mot de passe (masqué). Après une auth réussie, Vault stocke le token dans le token helper (~/.vault-token) — vous n'avez PAS besoin de relancer vault login pour les requêtes futures. Le flag -path permet de cibler une méthode userpass montée sur un chemin non standard."},
+      {id:"12-4",type:"TRUE_FALSE",text:"Plusieurs instances de la méthode Userpass peuvent être activées sur différents chemins du même serveur Vault.",correct:true,xp:20,explanation:"Comme toutes les méthodes d'auth Vault, plusieurs instances d'userpass peuvent coexister sur différents chemins (ex. userpass/ et local/). Utilisez vault auth enable -path=local userpass pour monter une seconde instance. Cela permet de segmenter les utilisateurs par équipe, environnement ou niveau de confiance. Connectez-vous à un montage spécifique avec vault login -method=userpass -path=local."},
+      {id:"12-5",type:"MCQ",text:"Quelle commande met à jour le mot de passe d'un utilisateur Userpass existant nommé 'charleszi' ?",options:["vault update auth/userpass/users/charleszi password=NewP@ss","vault write auth/userpass/users/charleszi/password password=NewP@ss","vault auth update userpass charleszi --password=NewP@ss","vault kv put auth/userpass/users/charleszi password=NewP@ss"],correct:1,xp:25,explanation:"Le sous-chemin /password dédié est le bon endpoint pour les mises à jour de mot de passe. La commande complète est : vault write auth/userpass/users/<username>/password password=<nouveau>. Alternativement, vault write auth/userpass/users/<username> password=<nouveau> fonctionne aussi mais écrase tous les autres paramètres utilisateur — utilisez donc le sous-chemin /password pour des mises à jour ciblées."},
     ],
   },
 };
@@ -896,6 +912,57 @@ en:{
       },
     ]
   },
+  12:{
+    title:"Userpass Auth Method", emoji:"👤",
+    intro:"Userpass is Vault's human-friendly auth method. It lets operators authenticate with a username and password — simple to configure, ideal for interactive use by humans (not machines).",
+    steps:[
+      {
+        title:"What is Userpass & Enable",
+        body:[
+          "Userpass is designed for human operators who need interactive username/password authentication to Vault.",
+          "Unlike AppRole (machine-to-machine), Userpass prompts for a password at login time. It is NOT suitable for automated workloads — use AppRole or cloud auth methods for those.",
+          "Enable it with vault auth enable and verify with vault auth list."
+        ],
+        blocks:[
+          {label:"List current auth methods", code:"vault auth list"},
+          {label:"Enable Userpass", code:"vault auth enable userpass"},
+          {label:"Enable at a custom path", code:"vault auth enable -path=local userpass"},
+          {label:"Verify it's enabled", code:"vault auth list"},
+        ],
+        note:{type:"info", text:"Userpass mounts at auth/userpass/ by default. Multiple instances can coexist at different paths (e.g., userpass/ for corporate users, local/ for local accounts). Each instance manages its own user database independently."}
+      },
+      {
+        title:"Create & Configure Users",
+        body:[
+          "Create users with vault write auth/userpass/users/<username>. Set policies, token_ttl, and other token parameters at creation time or update them later.",
+          "Read back the user config to verify — the exam may test specific field values like token_ttl and token_policies.",
+          "List all users at a path with vault list."
+        ],
+        blocks:[
+          {label:"Create user 'automation'", code:"vault write auth/userpass/users/automation \\\n  password=Password1 \\\n  policies=kv-policy"},
+          {label:"Create user 'charleszi'", code:"vault write auth/userpass/users/charleszi \\\n  password=P@ssword1234 \\\n  policies=kv-policy"},
+          {label:"List all users", code:"vault list auth/userpass/users"},
+          {label:"Read user configuration", code:"vault read auth/userpass/users/automation"},
+          {label:"Set token TTL for a user", code:"vault write auth/userpass/users/charleszi token_ttl=24h"},
+        ],
+        note:{type:"warn", text:"Passwords are stored as bcrypt hashes in the Vault backend — they are never stored or logged in plaintext. Token parameters (token_ttl, token_max_ttl, token_policies) can be updated at any time with vault write to the user path."}
+      },
+      {
+        title:"Authenticate & Manage Passwords",
+        body:[
+          "Log in with vault login -method=userpass. The password is prompted interactively (hidden). The resulting token is stored in the token helper automatically.",
+          "To target a non-default mount path, add -path=<custom>.",
+          "Update a user's password using the dedicated /password sub-path endpoint."
+        ],
+        blocks:[
+          {label:"Login (prompts for password)", code:"vault login -method=userpass username=automation"},
+          {label:"Login against a custom path", code:"vault login -method=userpass -path=local username=steve"},
+          {label:"Update a user's password", code:"vault write auth/userpass/users/charleszi/password \\\n  password=NewP@ssword123"},
+        ],
+        note:{type:"tip", text:"After a successful vault login, the token is stored in ~/.vault-token. All subsequent vault commands use it automatically. To update only the password without touching other user settings, always use the /password sub-path endpoint."}
+      },
+    ]
+  },
 }, // end en
 fr:{
   1:{
@@ -1391,6 +1458,57 @@ fr:{
           {label:"Se connecter avec RoleID + SecretID", code:"vault write auth/approle/login \\\n  role_id=<votre-role-id> \\\n  secret_id=<votre-secret-id>"},
         ],
         note:{type:"tip", text:"Bonne pratique : livrez le RoleID via la gestion de config (Ansible, Terraform), livrez le SecretID via response wrapping depuis un orchestrateur de confiance. Aucun système unique ne détient jamais les deux — c'est le cœur du modèle de sécurité d'AppRole."}
+      },
+    ]
+  },
+  12:{
+    title:"Méthode Auth Userpass", emoji:"👤",
+    intro:"Userpass est la méthode d'auth Vault pensée pour les humains. Elle permet aux opérateurs de s'authentifier avec un nom d'utilisateur et un mot de passe — simple à configurer, idéale pour un usage interactif (pas pour les machines).",
+    steps:[
+      {
+        title:"Qu'est-ce qu'Userpass & Activation",
+        body:[
+          "Userpass est conçu pour les opérateurs humains qui ont besoin d'une authentification interactive par nom d'utilisateur/mot de passe vers Vault.",
+          "Contrairement à AppRole (machine-à-machine), Userpass demande un mot de passe à la connexion. Il n'est PAS adapté aux workloads automatisés — utilisez AppRole ou les méthodes d'auth cloud pour cela.",
+          "Activez-le avec vault auth enable et vérifiez avec vault auth list."
+        ],
+        blocks:[
+          {label:"Lister les méthodes d'auth actuelles", code:"vault auth list"},
+          {label:"Activer Userpass", code:"vault auth enable userpass"},
+          {label:"Activer sur un chemin personnalisé", code:"vault auth enable -path=local userpass"},
+          {label:"Vérifier que c'est activé", code:"vault auth list"},
+        ],
+        note:{type:"info", text:"Userpass se monte sur auth/userpass/ par défaut. Plusieurs instances peuvent coexister sur différents chemins (ex. userpass/ pour les utilisateurs corporate, local/ pour les comptes locaux). Chaque instance gère sa propre base d'utilisateurs indépendamment."}
+      },
+      {
+        title:"Créer & Configurer des utilisateurs",
+        body:[
+          "Créez des utilisateurs avec vault write auth/userpass/users/<username>. Définissez les politiques, token_ttl et autres paramètres de token à la création ou mettez-les à jour ultérieurement.",
+          "Relisez la config de l'utilisateur pour vérifier — l'examen peut tester des valeurs de champs spécifiques comme token_ttl et token_policies.",
+          "Listez tous les utilisateurs d'un chemin avec vault list."
+        ],
+        blocks:[
+          {label:"Créer l'utilisateur 'automation'", code:"vault write auth/userpass/users/automation \\\n  password=Password1 \\\n  policies=kv-policy"},
+          {label:"Créer l'utilisateur 'charleszi'", code:"vault write auth/userpass/users/charleszi \\\n  password=P@ssword1234 \\\n  policies=kv-policy"},
+          {label:"Lister tous les utilisateurs", code:"vault list auth/userpass/users"},
+          {label:"Lire la configuration d'un utilisateur", code:"vault read auth/userpass/users/automation"},
+          {label:"Définir le TTL du token pour un utilisateur", code:"vault write auth/userpass/users/charleszi token_ttl=24h"},
+        ],
+        note:{type:"warn", text:"Les mots de passe sont stockés sous forme de hash bcrypt dans le backend Vault — jamais en clair dans les logs ou le stockage. Les paramètres de token (token_ttl, token_max_ttl, token_policies) peuvent être mis à jour à tout moment avec vault write sur le chemin utilisateur."}
+      },
+      {
+        title:"S'authentifier & Gérer les mots de passe",
+        body:[
+          "Connectez-vous avec vault login -method=userpass. Le mot de passe est demandé interactivement (masqué). Le token résultant est stocké automatiquement dans le token helper.",
+          "Pour cibler un chemin de montage non standard, ajoutez -path=<custom>.",
+          "Mettez à jour le mot de passe d'un utilisateur via le sous-chemin dédié /password."
+        ],
+        blocks:[
+          {label:"Connexion (demande le mot de passe)", code:"vault login -method=userpass username=automation"},
+          {label:"Connexion sur un chemin personnalisé", code:"vault login -method=userpass -path=local username=steve"},
+          {label:"Mettre à jour le mot de passe d'un utilisateur", code:"vault write auth/userpass/users/charleszi/password \\\n  password=NewP@ssword123"},
+        ],
+        note:{type:"tip", text:"Après un vault login réussi, le token est stocké dans ~/.vault-token. Toutes les commandes vault suivantes l'utilisent automatiquement. Pour mettre à jour uniquement le mot de passe sans toucher aux autres paramètres, utilisez toujours le sous-chemin /password."}
       },
     ]
   },
