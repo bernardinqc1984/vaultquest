@@ -221,6 +221,7 @@ const CHAPTERS = {
     {id:8,emoji:"🚀",title:"Namespaces & Sentinel",xpReward:300,stars:5},
     {id:9,emoji:"📊",title:"Monitoring & Audit",   xpReward:250,stars:4},
     {id:10,emoji:"🤖",title:"Vault Agent",          xpReward:200,stars:3},
+    {id:11,emoji:"🔑",title:"AppRole Auth Method",  xpReward:225,stars:3},
   ],
   fr:[
     {id:1,emoji:"🔧",title:"Moteurs de Secrets",       xpReward:100,stars:1},
@@ -233,12 +234,13 @@ const CHAPTERS = {
     {id:8,emoji:"🚀",title:"Namespaces & Sentinel",    xpReward:300,stars:5},
     {id:9,emoji:"📊",title:"Monitoring & Audit",       xpReward:250,stars:4},
     {id:10,emoji:"🤖",title:"Vault Agent",             xpReward:200,stars:3},
+    {id:11,emoji:"🔑",title:"Méthode Auth AppRole",    xpReward:225,stars:3},
   ],
 };
 
 const BADGES = {
-  en:["🔑 Cubbyhole Keeper","🛡️ Hardening Hero","🔒 Security Sentinel","📜 Policy Paladin","⚡ HA Commander","🌐 DR Defender","🔐 HSM Handler","🚀 Namespace Navigator","📊 Telemetry Tracker","🤖 Agent Architect"],
-  fr:["🔑 Gardien Cubbyhole","🛡️ Héros du Durcissement","🔒 Sentinelle Sécurité","📜 Paladin des Politiques","⚡ Commandant HA","🌐 Défenseur DR","🔐 Maître HSM","🚀 Navigateur Namespace","📊 Traqueur de Télémétrie","🤖 Architecte Agent"],
+  en:["🔑 Cubbyhole Keeper","🛡️ Hardening Hero","🔒 Security Sentinel","📜 Policy Paladin","⚡ HA Commander","🌐 DR Defender","🔐 HSM Handler","🚀 Namespace Navigator","📊 Telemetry Tracker","🤖 Agent Architect","🔑 AppRole Ace"],
+  fr:["🔑 Gardien Cubbyhole","🛡️ Héros du Durcissement","🔒 Sentinelle Sécurité","📜 Paladin des Politiques","⚡ Commandant HA","🌐 Défenseur DR","🔐 Maître HSM","🚀 Navigateur Namespace","📊 Traqueur de Télémétrie","🤖 Architecte Agent","🔑 As de l'AppRole"],
 };
 
 const QUESTIONS = {
@@ -309,6 +311,13 @@ const QUESTIONS = {
       {id:"10-3",type:"MCQ",text:"What is the purpose of the 'token_sink' in Vault Agent configuration?",options:["It discards expired tokens automatically","It writes the current Vault token to a file so applications can read it without authenticating directly to Vault","It sends tokens to a remote Vault cluster for validation","It rotates the agent's token on a defined schedule"],correct:1,xp:25,explanation:"The token sink is a file (or other destination) where Vault Agent writes its current valid token. Applications read this file to obtain a Vault token — decoupling the authentication mechanism from application code. The agent handles renewal; the app simply reads the token file. This is the core of Vault Agent's secret zero solution."},
       {id:"10-4",type:"TRUE_FALSE",text:"Vault Agent can automatically re-authenticate to Vault if its current token expires or is revoked.",correct:true,xp:25,explanation:"Vault Agent's auto-auth continuously monitors the token TTL and renews it proactively. If renewal fails (max TTL reached or token revoked), the agent re-authenticates from scratch using the configured auth method. This provides fully hands-free token lifecycle management — no operator intervention required."},
     ],
+    11:[
+      {id:"11-1",type:"MCQ",text:"What is the primary use case for Vault's AppRole authentication method?",options:["Human operator login via MFA","Machine-to-machine authentication for automated workloads (CI/CD, scripts, apps)","Physical hardware token authentication","Kubernetes service account validation"],correct:1,xp:25,explanation:"AppRole is designed for non-human, automated workloads — scripts, pipelines, microservices. Its two-credential model (RoleID + SecretID) solves the secure introduction problem: each credential can be delivered via a different trusted channel, so no single channel compromise grants full access."},
+      {id:"11-2",type:"MCQ",text:"When bind_secret_id=true (the default), what two credentials are required to obtain a Vault token via AppRole?",options:["Username and password","RoleID (non-sensitive, like a username) and SecretID (sensitive, like a password)","AppID and UserID","Token and policy name"],correct:1,xp:25,explanation:"RoleID is non-sensitive — it identifies the role and can be baked into an app's config. SecretID is sensitive — it acts as a one-time or limited-use password, ideally delivered via response wrapping. The separation lets two different systems (e.g., config management + secrets manager) each deliver one half, preventing any single system from compromising the authentication."},
+      {id:"11-3",type:"TERMINAL",text:"Type the command to generate a new SecretID for an AppRole role named 'automation'.",correct:"vault write --force auth/approle/role/automation/secret-id",xp:30,explanation:"--force is required because the endpoint expects a POST with no data body — without it vault write would wait for input. The response includes secret_id, secret_id_accessor, secret_id_num_uses, and secret_id_ttl. For secure delivery, prefix with -wrap-ttl=60s to return a wrapping token instead of the raw SecretID."},
+      {id:"11-4",type:"MCQ",text:"Which AppRole configuration parameter limits the number of times a single SecretID can be used before it is automatically invalidated?",options:["secret_id_ttl","token_num_uses","secret_id_num_uses","bind_secret_id"],correct:2,xp:25,explanation:"secret_id_num_uses=1 creates a one-time-password behaviour — the SecretID is invalidated after the first successful authentication. Set to 0 for unlimited uses. For maximum security, combine secret_id_num_uses=1 with response wrapping for delivery: even if the wrapping token is intercepted, the SecretID can only be used once."},
+      {id:"11-5",type:"TRUE_FALSE",text:"When bind_secret_id is set to false, a workload can authenticate using only the RoleID without providing a SecretID.",correct:true,xp:20,explanation:"bind_secret_id=false disables the SecretID requirement — any entity that knows the RoleID can obtain a token for that role. This is significantly less secure and should only be used on trusted networks where RoleID exposure risk is acceptable. The default and recommended setting is true (SecretID required)."},
+    ],
   },
   fr:{
     1:[
@@ -376,6 +385,13 @@ const QUESTIONS = {
       {id:"10-2",type:"MCQ",text:"Avec ce template Vault Agent : {{ with secret \"secret/data/app\" }} ID: {{ .Data.data.username }} Color: {{ .Data.data.color }} {{ end }} — quelle affirmation n'est PAS valide ?",options:["Le secret dans Vault contient une clé avec le nom username","Le secret dans Vault contient une clé avec le nom color","Le secret dans Vault contient une clé avec le nom ID","Le chemin du secret dans Vault est secret/data/app"],correct:2,xp:35,explanation:"'ID:' dans le template est une étiquette statique dans le fichier de sortie rendu — ce n'est PAS une clé de secret Vault. Les vraies clés Vault accédées sont 'username' (via .Data.data.username) et 'color' (via .Data.data.color). Le préfixe 'ID:' est du texte brut écrit dans le fichier de sortie. Piège classique à l'examen : étiquettes de template ≠ noms de clés Vault."},
       {id:"10-3",type:"MCQ",text:"Quel est le rôle du 'token_sink' dans la configuration de Vault Agent ?",options:["Il supprime automatiquement les tokens expirés","Il écrit le token Vault courant dans un fichier pour que les applications puissent le lire sans s'authentifier directement à Vault","Il envoie les tokens à un cluster Vault distant pour validation","Il fait pivoter le token de l'agent selon un calendrier défini"],correct:1,xp:25,explanation:"Le token sink est un fichier (ou autre destination) où Vault Agent écrit son token valide courant. Les applications lisent ce fichier pour obtenir un token Vault — découplant le mécanisme d'authentification du code applicatif. L'agent gère le renouvellement ; l'application se contente de lire le fichier token. C'est le cœur de la solution secret zéro de Vault Agent."},
       {id:"10-4",type:"TRUE_FALSE",text:"Vault Agent peut se ré-authentifier automatiquement à Vault si son token courant expire ou est révoqué.",correct:true,xp:25,explanation:"L'auto-auth de Vault Agent surveille continuellement le TTL du token et le renouvelle de manière proactive. En cas d'échec du renouvellement (TTL max atteint ou token révoqué), l'agent se ré-authentifie depuis le début via la méthode d'auth configurée. Cela fournit une gestion entièrement automatique du cycle de vie des tokens — sans intervention opérateur."},
+    ],
+    11:[
+      {id:"11-1",type:"MCQ",text:"Quel est le cas d'usage principal de la méthode d'authentification AppRole de Vault ?",options:["Connexion d'un opérateur humain via MFA","Authentification machine-à-machine pour les workloads automatisés (CI/CD, scripts, applications)","Authentification par jeton matériel physique","Validation de compte de service Kubernetes"],correct:1,xp:25,explanation:"AppRole est conçu pour les workloads automatisés sans intervention humaine — scripts, pipelines, microservices. Son modèle à deux credentials (RoleID + SecretID) résout le problème de l'introduction sécurisée : chaque credential peut être livré par un canal différent, de sorte qu'aucune compromission unique n'accorde un accès complet."},
+      {id:"11-2",type:"MCQ",text:"Quand bind_secret_id=true (valeur par défaut), quels deux credentials sont nécessaires pour obtenir un token Vault via AppRole ?",options:["Nom d'utilisateur et mot de passe","RoleID (non-sensible, comme un nom d'utilisateur) et SecretID (sensible, comme un mot de passe)","AppID et UserID","Token et nom de politique"],correct:1,xp:25,explanation:"Le RoleID est non-sensible — il identifie le rôle et peut être intégré dans la config d'une app. Le SecretID est sensible — il agit comme un mot de passe à usage limité, idéalement livré via response wrapping. La séparation permet à deux systèmes distincts de livrer chaque moitié, empêchant toute compromission unique de permettre l'authentification."},
+      {id:"11-3",type:"TERMINAL",text:"Tapez la commande pour générer un nouveau SecretID pour un rôle AppRole nommé 'automation'.",correct:"vault write --force auth/approle/role/automation/secret-id",xp:30,explanation:"--force est nécessaire car l'endpoint attend un POST sans corps de données — sans lui, vault write attendrait une entrée. La réponse inclut secret_id, secret_id_accessor, secret_id_num_uses et secret_id_ttl. Pour une livraison sécurisée, préfixez avec -wrap-ttl=60s pour retourner un token d'emballage plutôt que le SecretID brut."},
+      {id:"11-4",type:"MCQ",text:"Quel paramètre de configuration AppRole limite le nombre d'utilisations d'un SecretID avant qu'il soit automatiquement invalidé ?",options:["secret_id_ttl","token_num_uses","secret_id_num_uses","bind_secret_id"],correct:2,xp:25,explanation:"secret_id_num_uses=1 crée un comportement de mot de passe à usage unique — le SecretID est invalidé après la première authentification réussie. Mettre à 0 permet des usages illimités. Pour une sécurité maximale, combinez secret_id_num_uses=1 avec response wrapping pour la livraison : même si le token d'emballage est intercepté, le SecretID ne peut être utilisé qu'une seule fois."},
+      {id:"11-5",type:"TRUE_FALSE",text:"Quand bind_secret_id est mis à false, un workload peut s'authentifier en utilisant uniquement le RoleID sans fournir de SecretID.",correct:true,xp:20,explanation:"bind_secret_id=false désactive l'exigence du SecretID — toute entité connaissant le RoleID peut obtenir un token pour ce rôle. C'est nettement moins sécurisé et ne devrait être utilisé que sur des réseaux de confiance où le risque d'exposition du RoleID est acceptable. La valeur par défaut et recommandée est true (SecretID requis)."},
     ],
   },
 };
@@ -829,6 +845,57 @@ en:{
       },
     ]
   },
+  11:{
+    title:"AppRole Auth Method", emoji:"🔑",
+    intro:"AppRole is Vault's auth method for machine-to-machine workloads. It uses two credentials — RoleID and SecretID — to solve the secure introduction problem without human involvement.",
+    steps:[
+      {
+        title:"What is AppRole & Enable",
+        body:[
+          "AppRole solves the 'secret zero' problem for automated workloads: how does a script or service authenticate to Vault without a pre-shared secret?",
+          "The answer: split the credential in two. RoleID (non-sensitive, like a username) + SecretID (sensitive, like a one-time password). Each is delivered by a different trusted channel.",
+          "First, enable the AppRole auth method and verify the auth list."
+        ],
+        blocks:[
+          {label:"List enabled auth methods", code:"vault auth list"},
+          {label:"Enable AppRole", code:"vault auth enable approle"},
+          {label:"Verify AppRole is enabled", code:"vault auth list"},
+        ],
+        note:{type:"info", text:"AppRole is disabled by default. It must be explicitly enabled. Once enabled, it mounts at auth/approle/ by default. Use -path=<custom> to mount at a different path."}
+      },
+      {
+        title:"Create a Policy & Role",
+        body:[
+          "Before creating a role, write the policy that will be assigned to tokens issued by the role.",
+          "Then create the AppRole role and configure its key parameters: token_ttl, secret_id_num_uses, and bind_secret_id.",
+          "Read back the role config to verify all parameters — the exam may ask about specific field values."
+        ],
+        blocks:[
+          {label:"Create a policy granting read on kv/data/automation", code:"vault policy write kv-policy -<<EOF\npath \"kv/data/automation\" {\n  capabilities = [\"read\"]\n}\nEOF"},
+          {label:"Create the AppRole role", code:"vault write auth/approle/role/automation policies=kv-policy"},
+          {label:"Set token TTL to 24h", code:"vault write auth/approle/role/automation token_ttl=24h"},
+          {label:"Read role configuration", code:"vault read auth/approle/role/automation"},
+          {label:"List all roles", code:"vault list auth/approle/role"},
+        ],
+        note:{type:"warn", text:"bind_secret_id=true by default — SecretID is required. secret_id_num_uses=0 means unlimited. secret_id_ttl=0s means the SecretID never expires. Tune these for your security requirements."}
+      },
+      {
+        title:"Get Credentials & Authenticate",
+        body:[
+          "The RoleID is a static identifier — read it once and bake it into your app's configuration. It is NOT a secret.",
+          "The SecretID is a dynamic credential — generate it fresh for each deployment and deliver it via response wrapping.",
+          "Authenticate by sending both to auth/approle/login. Vault returns a token with the role's policies."
+        ],
+        blocks:[
+          {label:"Read the RoleID", code:"vault read auth/approle/role/automation/role-id"},
+          {label:"Generate a SecretID", code:"vault write --force auth/approle/role/automation/secret-id"},
+          {label:"Generate SecretID with response wrapping (secure delivery)", code:"vault write -wrap-ttl=60s --force auth/approle/role/automation/secret-id"},
+          {label:"Login with RoleID + SecretID", code:"vault write auth/approle/login \\\n  role_id=<your-role-id> \\\n  secret_id=<your-secret-id>"},
+        ],
+        note:{type:"tip", text:"Best practice: deliver RoleID via config management (Ansible, Terraform), deliver SecretID via response wrapping from a trusted orchestrator. No single system ever holds both — this is the core of AppRole's security model."}
+      },
+    ]
+  },
 }, // end en
 fr:{
   1:{
@@ -1273,6 +1340,57 @@ fr:{
           {label:"L'app utilise l'agent comme proxy Vault", code:"export VAULT_ADDR=http://127.0.0.1:8007"},
         ],
         note:{type:"tip", text:"Avec la mise en cache activée, l'agent agit comme un proxy Vault local. L'app pointe VAULT_ADDR vers l'agent — elle obtient une mise en cache transparente et un renouvellement automatique du token."}
+      },
+    ]
+  },
+  11:{
+    title:"Méthode Auth AppRole", emoji:"🔑",
+    intro:"AppRole est la méthode d'auth Vault pour les workloads machine-à-machine. Elle utilise deux credentials — RoleID et SecretID — pour résoudre le problème de l'introduction sécurisée sans intervention humaine.",
+    steps:[
+      {
+        title:"Qu'est-ce qu'AppRole & Activation",
+        body:[
+          "AppRole résout le problème du 'secret zéro' pour les workloads automatisés : comment un script ou un service s'authentifie-t-il à Vault sans secret partagé préalable ?",
+          "La réponse : diviser le credential en deux. RoleID (non-sensible, comme un nom d'utilisateur) + SecretID (sensible, comme un mot de passe à usage unique). Chacun est livré par un canal de confiance différent.",
+          "Commencez par activer la méthode d'auth AppRole et vérifier la liste d'auth."
+        ],
+        blocks:[
+          {label:"Lister les méthodes d'auth activées", code:"vault auth list"},
+          {label:"Activer AppRole", code:"vault auth enable approle"},
+          {label:"Vérifier qu'AppRole est activé", code:"vault auth list"},
+        ],
+        note:{type:"info", text:"AppRole est désactivé par défaut. Il doit être explicitement activé. Une fois activé, il se monte sur auth/approle/ par défaut. Utilisez -path=<custom> pour le monter sur un chemin différent."}
+      },
+      {
+        title:"Créer une politique & un rôle",
+        body:[
+          "Avant de créer un rôle, écrivez la politique qui sera assignée aux tokens émis par ce rôle.",
+          "Créez ensuite le rôle AppRole et configurez ses paramètres clés : token_ttl, secret_id_num_uses et bind_secret_id.",
+          "Relisez la config du rôle pour vérifier tous les paramètres — l'examen peut interroger sur des valeurs de champs spécifiques."
+        ],
+        blocks:[
+          {label:"Créer une politique accordant la lecture sur kv/data/automation", code:"vault policy write kv-policy -<<EOF\npath \"kv/data/automation\" {\n  capabilities = [\"read\"]\n}\nEOF"},
+          {label:"Créer le rôle AppRole", code:"vault write auth/approle/role/automation policies=kv-policy"},
+          {label:"Définir le TTL du token à 24h", code:"vault write auth/approle/role/automation token_ttl=24h"},
+          {label:"Lire la configuration du rôle", code:"vault read auth/approle/role/automation"},
+          {label:"Lister tous les rôles", code:"vault list auth/approle/role"},
+        ],
+        note:{type:"warn", text:"bind_secret_id=true par défaut — le SecretID est requis. secret_id_num_uses=0 signifie illimité. secret_id_ttl=0s signifie que le SecretID n'expire jamais. Ajustez ces valeurs selon vos exigences de sécurité."}
+      },
+      {
+        title:"Obtenir les credentials & S'authentifier",
+        body:[
+          "Le RoleID est un identifiant statique — lisez-le une fois et intégrez-le dans la configuration de votre app. Ce n'est PAS un secret.",
+          "Le SecretID est un credential dynamique — générez-en un nouveau pour chaque déploiement et livrez-le via response wrapping.",
+          "Authentifiez-vous en envoyant les deux à auth/approle/login. Vault retourne un token avec les politiques du rôle."
+        ],
+        blocks:[
+          {label:"Lire le RoleID", code:"vault read auth/approle/role/automation/role-id"},
+          {label:"Générer un SecretID", code:"vault write --force auth/approle/role/automation/secret-id"},
+          {label:"Générer un SecretID avec response wrapping (livraison sécurisée)", code:"vault write -wrap-ttl=60s --force auth/approle/role/automation/secret-id"},
+          {label:"Se connecter avec RoleID + SecretID", code:"vault write auth/approle/login \\\n  role_id=<votre-role-id> \\\n  secret_id=<votre-secret-id>"},
+        ],
+        note:{type:"tip", text:"Bonne pratique : livrez le RoleID via la gestion de config (Ansible, Terraform), livrez le SecretID via response wrapping depuis un orchestrateur de confiance. Aucun système unique ne détient jamais les deux — c'est le cœur du modèle de sécurité d'AppRole."}
       },
     ]
   },
